@@ -1,0 +1,191 @@
+body {
+	background-color: white;
+	text-align: center;
+	font-family: "Arial", "Verdana", sans-serif;
+}
+
+h1 {
+	font-size: 3em;
+}
+
+#content {
+	margin: auto;
+	display: inline-block;
+}
+
+.big-button {
+	float: left;
+	border: 5px lightblue solid;
+	border-radius: 10px;
+	padding: 20px;
+	margin: 20px;
+	width: 80px;
+	height: 80px;
+	font-size: 1.4em;
+}
+
+.big-button:hover {
+	background-color: lightcyan;
+}
+
+.big-button img {
+	margin-bottom: 10px;
+	width: 50px;
+	height: 50px;
+}
+
+.clearfix {
+	clear: both;
+}
+
+progress {
+	display: none;
+}
+
+.status-complete {
+	display: none;
+	border: 1px solid black;
+	border-radius: 10px;
+	background-color: PaleGreen;
+	padding: 10px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.status-failed {
+	display: none;
+	border: 1px solid black;
+	border-radius: 10px;
+	background-color: LightSalmon;
+	padding: 10px;
+  margin-top: 20px;
+}
+
+a {
+	text-decoration: none;
+	color: black;
+}
+
+#upload-status-complete:hover {
+	background-color: lightgreen;
+}
+
+#upload-status-complete p {
+	font-size: 0.9em;
+}
+
+#unorganised-notification {
+  display: none;
+  border: 1px solid black;
+  border-radius: 10px;
+  background-color: LemonChiffon;
+  margin: 20px;
+}
+
+.organise-order-box {
+  padding: 15px;
+  border: 1px solid lightgray;
+  width: 100%;
+}
+
+#organise-order img {
+  width: 35px;
+  height: 50px;
+}
+
+.page {
+  width: 220px;
+  float: left;
+  font-size: 0.8em;
+  border: 2px dashed white;
+  margin: 10px;
+}
+
+.page-selected {
+  border: 2px dashed PaleGreen;
+}
+
+.page img {
+  width: 142px;
+  height: 200px;
+  margin: 0 auto;
+  display: block;
+}
+
+.page input {
+  display: block;
+  margin: 10px auto;
+}
+
+#organise-tags {
+  text-align: left;
+  list-style: circle inside url('images/open-iconic/svg/x.svg');
+}
+
+.tag {
+  border: 1px solid gray;
+  border-radius: 5px;
+  background-color: PaleTurquoise;
+  margin: 5px;
+  padding: 3px 3px 3px 5px;
+  font-size: 0.7em;
+  cursor: inherit;
+}
+
+#organise-tags .tag {
+  cursor: pointer;
+  padding: 3px 3px 3px 7px;
+}
+
+.organise-form input,
+.organise-form label {
+  text-align: left;
+  display: block;
+}
+
+.organise-form label {
+  margin-top: 10px;
+  font-size: 0.9em;
+}
+
+#dialog-confirm {
+  text-align: left;
+  font-size: 0.8em;
+}
+
+.document-list img {
+  width: auto;
+  height: 1em;
+}
+
+.document-list {
+  text-align: left;
+  border-collapse:collapse;
+}
+
+.document-list th {
+  font-weight: bold;
+}
+
+.document-list td,
+.document-list th {
+  padding: 10px;
+  border: none;
+}
+
+.document-list tr:nth-child(even) {
+  background-color: lightgray;
+}
+
+.document-list tr:nth-child(odd) {
+
+}
+
+.document-list tr:hover {
+  background-color: rgb(235,235,235);
+  cursor: pointer;
+}
+
+.property-name {
+  font-weight: bold;
+}
