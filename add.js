@@ -7,7 +7,7 @@ $(document).ready(function() {
         $('#upload-status p').empty();
         $('#upload-status-complete').hide();
         $.ajax({
-            url: 'api/add_page.php',
+            url: 'pages',
             type: 'POST',
             xhr: function() {
                 var myXhr = $.ajaxSettings.xhr();

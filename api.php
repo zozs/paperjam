@@ -206,6 +206,84 @@ $app->post('/documents', function() use ($db, $app) {
   }
 });
 
+$app->post('/pages', function() use ($db, $app, $PATH) {
+  if (count($_FILES) == 0) {
+    response_validation_error($app, 'No files given');
+  }
+
+  /*
+   * First walk-through all elements of the $_FILES array, including array-
+   * type form fields. Convert everything to a flattened list of files.
+   */
+  $files = [];
+  foreach ($_FILES as $form_field => $field_data) {
+    if (is_array($field_data) && count($field_data) > 0) {
+      // Check if this is an array of multiple files with the same form name.
+      $first = reset($field_data);
+      if (is_array($first)) {
+        /* Multiple files with same form name. */
+        $objs = [];
+        foreach ($field_data as $propname => $props) {
+          foreach ($props as $fileindex => $value) {
+            $objs[$fileindex][$propname] = $value;
+          }
+        }
+
+        $files = array_merge($files, $objs);
+      } else {
+        /* Just a single file. */
+        $files[] = $field_data;
+      }
+    } else {
+      response_validation_error($app, 'Invalid file input posted.');
+    }
+  }
+
+  if (count($files) == 0) {
+    response_validation_error($app, 'No file uploaded.');
+  }
+
+  /* Check for error codes from PHP. */
+  foreach ($files as $file) {
+    if ($file['error'] != UPLOAD_ERR_OK) {
+      response_validation_error($app, 'An upload failed!');
+    }
+  }
+
+  /* Now, sort the $files array by (original) file name. */
+  usort($files, function($a, $b) {
+    return strcmp($a['name'], $b['name']);
+  });
+
+  /* Now do the interesting stuff, i.e. renaming files, add to db, etc. */
+  $timestamp = gmdate('Ymd\THis');
+
+  foreach ($files as $i => $file) {
+    /* Move and rename file. */
+    $seqno = sprintf('%03d', $i);
+    /*
+     * Should probably validate the file extension and contents for security
+     * reasons. Let's assume the user is nice (yeah, right...)
+     */
+    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $dest_filename = $timestamp . '_' . $seqno . "." . strtolower($extension);
+    $destination = $PATH . '/' . $dest_filename;
+    if (!move_uploaded_file($file['tmp_name'], $destination)) {
+      // Attack or weird failure.
+      response_server_error($app, 'Could not move uploaded file!');
+    }
+    chmod($destination, 0644);
+
+    /* Add page to database. */
+    $sql = 'INSERT INTO pages (file) VALUES (?);';
+    $stmt = $db->prepare($sql);
+    $stmt->execute([$dest_filename]);
+  }
+
+  /* Return data? */
+  response_json($app, 200, []);
+});
+
 /* PUT handlers */
 $app->put('/unseen/:unseen_id', function($unseen_id) use ($db, $app) {
   validate_params($app, [Validators::$AVAILABLE, Validators::$COMMENT]);
