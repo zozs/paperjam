@@ -82,6 +82,10 @@ a {
   margin: 20px;
 }
 
+#unorganised-notification:hover {
+  background-color: moccasin;
+}
+
 .organise-order-box {
   padding: 15px;
   border: 1px solid lightgray;

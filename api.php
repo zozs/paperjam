@@ -258,16 +258,22 @@ $app->post('/pages', function() use ($db, $app, $PATH) {
   /* Now do the interesting stuff, i.e. renaming files, add to db, etc. */
   $timestamp = gmdate('Ymd\THis');
 
-  foreach ($files as $i => $file) {
-    /* Move and rename file. */
-    $seqno = sprintf('%03d', $i);
+  $i = 0;
+  foreach ($files as $file) {
     /*
      * Should probably validate the file extension and contents for security
      * reasons. Let's assume the user is nice (yeah, right...)
      */
     $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-    $dest_filename = $timestamp . '_' . $seqno . "." . strtolower($extension);
-    $destination = $PATH . '/' . $dest_filename;
+
+    // Avoid getting a filename that is already used. Iterate until unique
+    // filename is found.
+    do {
+      /* Move and rename file. */
+      $seqno = sprintf('%03d', $i++);
+      $dest_filename = $timestamp . '_' . $seqno . "." . strtolower($extension);
+      $destination = $PATH . '/' . $dest_filename;
+    } while (file_exists($destination));
     if (!move_uploaded_file($file['tmp_name'], $destination)) {
       // Attack or weird failure.
       response_server_error($app, 'Could not move uploaded file!');
