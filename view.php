@@ -16,6 +16,7 @@ if (!preg_match('/^\d+$/', $_GET['id'])) {
   <head>
   	<meta charset="utf-8" />
     <title>View document</title>
+    <link rel="icon" href="images/favicon.png" />
     <link rel="stylesheet" href="paperjam.css" />
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script>

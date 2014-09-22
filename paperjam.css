@@ -4,8 +4,14 @@ body {
 	font-family: "Arial", "Verdana", sans-serif;
 }
 
+@font-face {
+  font-family: MomsTypewriter;
+  src: url(images/MomsTypewriter.ttf);
+}
+
 h1 {
 	font-size: 3em;
+  font-family: MomsTypewriter;
 }
 
 #content {
@@ -173,20 +179,20 @@ a {
 
 .document-list td,
 .document-list th {
-  padding: 10px;
+  padding: 5px 15px;
   border: none;
 }
 
-.document-list tr:nth-child(even) {
-  background-color: lightgray;
+.document-list tbody tr:nth-child(even) {
+  background-color: rgb(230,230,230);
 }
 
-.document-list tr:nth-child(odd) {
+.document-list tbody tr:nth-child(odd) {
 
 }
 
-.document-list tr:hover {
-  background-color: rgb(235,235,235);
+.document-list tbody tr:hover {
+  background-color: rgb(210,210,210);
   cursor: pointer;
 }
 
