@@ -2,7 +2,7 @@ $(document).ready(function() {
   $.ajax({
     url: 'unorganised',
     dataType: 'json',
-    timeout: 5000
+    timeout: 25000
   }).done(function(data) {
     if (data.unorganised.length > 0) {
       $('#unorganised-notification').show();

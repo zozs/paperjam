@@ -128,14 +128,14 @@ $app->get('/unorganised', function() use ($db, $app) {
 
 $app->get('/senders', function() use ($db, $app) {
   $sql = "SELECT ROW_TO_JSON(x) AS json FROM (SELECT ARRAY_TO_JSON(ARRAY(
-            SELECT name FROM senders)) AS senders) x;";
+            SELECT name FROM senders ORDER BY name)) AS senders) x;";
   $stmt = $db->query($sql);
   response_json_string($app, 200, $stmt->fetchColumn());
 });
 
 $app->get('/tags', function() use ($db, $app) {
   $sql = "SELECT ROW_TO_JSON(x) AS json FROM (SELECT ARRAY_TO_JSON(ARRAY(
-            SELECT name FROM tags)) AS tags) x;";
+            SELECT name FROM tags ORDER BY name)) AS tags) x;";
   $stmt = $db->query($sql);
   response_json_string($app, 200, $stmt->fetchColumn());
 });

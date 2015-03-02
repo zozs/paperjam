@@ -62,7 +62,7 @@ function create_document() {
   $.ajax({
     url: 'documents',
     type: 'POST',
-    timeout: 5000,
+    timeout: 25000,
     contentType: 'application/json',
     data: JSON.stringify({
       pages: pages,
@@ -88,7 +88,7 @@ function delete_pages() {
         url: 'pages/' + p,
         type: 'delete',
         dataType: 'json',
-        timeout: 5000
+        timeout: 25000
       }).fail(function() {
         /* Handle failure. Care must be taken since this may be launched
          * multiple times since deletion is done in parallel for each page. */
@@ -116,7 +116,7 @@ function load_senders() {
   $.ajax({
     url: 'senders',
     dataType: 'json',
-    timeout: 5000
+    timeout: 25000
   }).done(function(data) {
     $('#sender').autocomplete({
       source: data.senders
@@ -128,7 +128,7 @@ function load_tags() {
   $.ajax({
     url: 'tags',
     dataType: 'json',
-    timeout: 5000
+    timeout: 25000
   }).done(function(data) {
     $('#tag').autocomplete({
       source: data.tags
@@ -140,7 +140,7 @@ function load_unorganised() {
   $.ajax({
     url: 'unorganised',
     dataType: 'json',
-    timeout: 5000
+    timeout: 25000
   }).done(function(data) {
     $('#unorganised-pages').empty();
     $('#organise-order').empty();

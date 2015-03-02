@@ -2,7 +2,7 @@ $(document).ready(function() {
   $.ajax({
     url: 'documents',
     dataType: 'json',
-    timeout: 5000
+    timeout: 25000
   }).done(function(data) {
     $.each(data.documents, function(i, d) {
       var row = $('<tr>');

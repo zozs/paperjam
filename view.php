@@ -34,7 +34,7 @@ if (!preg_match('/^\d+$/', $_GET['id'])) {
       $.ajax({
         url: 'documents/' + db_id,
         dataType: 'json',
-        timeout: 5000
+        timeout: 25000
       }).done(function(data) {
         var d = data.document;
         $('#date').text(d.date);
