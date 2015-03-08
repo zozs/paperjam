@@ -127,8 +127,15 @@ a {
   margin: 10px auto;
 }
 
-#organise-tags {
+.tag-list {
   text-align: left;
+}
+
+.add-tag-list {
+  list-style: circle inside url('images/open-iconic/svg/plus.svg');
+}
+
+.remove-tag-list {
   list-style: circle inside url('images/open-iconic/svg/x.svg');
 }
 
@@ -142,7 +149,7 @@ a {
   cursor: inherit;
 }
 
-#organise-tags .tag {
+.tag-list .tag {
   cursor: pointer;
   padding: 3px 3px 3px 7px;
 }

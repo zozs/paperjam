@@ -30,12 +30,7 @@ $(document).ready(function() {
   });
 
   $('#tag-form').submit(function(event) {
-    var tag = $('<li>').addClass('tag').text($('#tag').val());
-    tag.click(function() {
-      tag.remove();
-    });
-    $('#organise-tags').append(tag);
-
+    add_tag($('#tag').val());
     $('#tag').val('');
     return false;
   });
@@ -45,17 +40,27 @@ $(document).ready(function() {
     $('#dialog-confirm').dialog('open');
   });
 
+  // On sender change, load related tags.
+  $('#sender').change(function() {
+    load_related_tags($(this).val());
+  });
+
   load_senders();
   load_tags();
   load_unorganised();
 });
 
+function add_tag(tag) {
+  var tag_elem = $('<li>').addClass('tag').text(tag);
+  tag_elem.click(function() {
+    tag_elem.remove();
+  });
+  $('#organise-tags').append(tag_elem);
+}
+
 function create_document() {
   var pages = selected_pages();
-  var tags = $('#organise-tags li')
-    .map(function() {
-      return $(this).text();
-    }).get();
+  var tags = current_tags();
   var sender = $('#sender').val();
   var date = $('#date').val();
 
@@ -79,6 +84,13 @@ function create_document() {
     /* Failed. */
     $('.status-failed').show();
   });
+}
+
+function current_tags() {
+  return $('#organise-tags li')
+    .map(function() {
+      return $(this).text();
+    }).get();
 }
 
 function delete_pages() {
@@ -112,6 +124,29 @@ function file_img_url(file) {
   return 'files/' + file;
 }
 
+function load_related_tags(sender) {
+  var encoded_sender = encodeURIComponent(sender);
+  $.ajax({
+    url: 'senders/' + encoded_sender + '/relatedtags',
+    dataType: 'json',
+    timeout: 25000
+  }).done(function(data) {
+    var current = current_tags();
+    var related = $('#related-tags ul');
+    related.empty();
+    // First filter out already selected tags.
+    var filtered = $(data.related).not(current).get();
+    $.each(filtered, function(_, tag) {
+      var item = $('<li>').addClass('tag').text(tag);
+      item.click(function() {
+        add_tag(tag);
+      });
+      related.append(item);
+    });
+  }).fail(function() {
+  });
+}
+
 function load_senders() {
   $.ajax({
     url: 'senders',
@@ -119,7 +154,8 @@ function load_senders() {
     timeout: 25000
   }).done(function(data) {
     $('#sender').autocomplete({
-      source: data.senders
+      source: data.senders,
+      change: function(event, ui) { /*load_related_tags(ui.item);*/ }
     });
   });
 }

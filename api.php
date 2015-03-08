@@ -133,6 +133,18 @@ $app->get('/senders', function() use ($db, $app) {
   response_json_string($app, 200, $stmt->fetchColumn());
 });
 
+$app->get('/senders/:sender/relatedtags', function($sender) use ($db, $app) {
+  $sql = "SELECT ROW_TO_JSON(x) AS json FROM (SELECT ARRAY_TO_JSON(ARRAY(
+          SELECT name FROM tags WHERE id IN 
+           (SELECT tid FROM documents_tags WHERE did IN
+             (SELECT id FROM documents WHERE sender IN 
+               (SELECT id FROM senders WHERE name=?))
+            GROUP BY tid))) AS related) x;";
+  $stmt = $db->prepare($sql);
+  $stmt->execute([$sender]);
+  response_json_string($app, 200, $stmt->fetchColumn());
+});
+
 $app->get('/tags', function() use ($db, $app) {
   $sql = "SELECT ROW_TO_JSON(x) AS json FROM (SELECT ARRAY_TO_JSON(ARRAY(
             SELECT name FROM tags ORDER BY name)) AS tags) x;";
