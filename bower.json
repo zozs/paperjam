@@ -1,0 +1,22 @@
+{
+  "name": "paperjam",
+  "main": "index.html",
+  "version": "1.0.0",
+  "homepage": "https://github.com/zozs/paperjam",
+  "authors": [
+    "Linus Karlsson <linus@zozs.se>"
+  ],
+  "description": "Stores important papers.",
+  "license": "ISC",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.5",
+    "angular-bootstrap": "~0.13.0"
+  }
+}

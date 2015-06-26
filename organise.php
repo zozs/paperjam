@@ -3,20 +3,23 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Organise pages</title>
-    <link rel="icon" href="images/favicon.png" />
-    <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/themes/smoothness/jquery-ui.css" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="paperjam.css" />
+    <link rel="icon" href="images/favicon.png" />
+    <title>Paperjam - organise</title>
+
+
+    <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/themes/smoothness/jquery-ui.css" />
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js"></script>
-    <script src="organise.js"></script>
   </head>
 
   <body>
-    <div id="content">
-      <a href="index.html">
-        <h1>PaperJam</h1>
-      </a>
+    <?php $navbarCurrent = basename(__FILE__); require('navbar.php'); ?>
+
+    <div class="container">
       <div id="organise-accordion">
         <h3>Select pages</h3>
         <div>
@@ -105,5 +108,10 @@
       </p>
     </div>
 
+    <!-- scripts and stuff -->
+    <script src="bower_components/angular/angular.min.js"></script>
+    <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+    <script src="paperjam.js"></script>
+    <script src="organise.js"></script>
   </body>
 </html>

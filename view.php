@@ -12,74 +12,58 @@ if (!preg_match('/^\d+$/', $_GET['id'])) {
 
 <!DOCTYPE html>
 
-<html>
+<html ng-app="paperjamApp">
   <head>
-  	<meta charset="utf-8" />
-    <title>View document</title>
-    <link rel="icon" href="images/favicon.png" />
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="paperjam.css" />
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-    <script>
-      function file_img(file) {
-        return $('<img>', {
-          src: file_img_url(file),
-          alt: file
-        });
-      }
+    <link rel="icon" href="images/favicon.png" />
+    <title>Paperjam - view document</title>
+  </head>
 
-      function file_img_url(file) {
-        return 'files/' + file;
-      }
+  <body ng-controller="ViewDocumentCtrl">
+    <?php $navbarCurrent = basename(__FILE__); require('navbar.php'); ?>
+    
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4">
+          <h3>Date</h3>
+          <p>{{ document.date }}</p>
+        </div>
+        <div class="col-md-4">
+          <h3>Sender</h3>
+          <p>{{ document.sender }}</p>
+        </div>
+        <div class="col-md-4">
+          <h3>Tags</h3>
+          <span class="tag" ng-repeat="tag in document.tags">{{ tag }}</span>
+        </div>
+      </div>
+      <div class="row">
+        <h3>Pages</h3>
+        <div id="pages">
+          <div class="page" ng-repeat="page in document.pages">
+            <a href="files/{{ page }}" target="_blank">
+              <img src="files/{{ page }}" alt="{{ page }}">
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- scripts and stuff -->
+    <script src="bower_components/angular/angular.min.js"></script>
+    <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+    <script src="paperjam.js"></script>
+    <script>
       var db_id = <?= $_GET['id']; ?>;
-      $.ajax({
-        url: 'documents/' + db_id,
-        dataType: 'json',
-        timeout: 25000
-      }).done(function(data) {
-        var d = data.document;
-        $('#date').text(d.date);
-        $('#sender').text(d.sender);
-        var tag_list = $('#tags');
-        $.each(d.tags, function(j, t) {
-          tag_list.append($('<span>').addClass('tag').text(t));
-        });
-        
-        $.each(d.pages, function(j, page) {
-          var p = $('<div>').addClass('page')
-            .append($('<a>', {
-              href: file_img_url(page),
-              target: '_blank'
-            })
-              .append(file_img(page)));
-          p.appendTo($('#pages'));
+      paperjamApp.controller('ViewDocumentCtrl', function($scope, $http) {
+        $http.get('documents/' + db_id).success(function(data) {
+          $scope.document = data.document;
         });
       });
     </script>
-  </head>
-
-  <body class="view-page">
-    <div id="content">
-      <a href="index.html">
-        <h1>PaperJam</h1>
-      </a>
-
-      <p class="property">
-        <span class="property-name">Date:</span>
-        <span class="property-value" id="date"></span>
-      </p>
-      <p class="property">
-        <span class="property-name">Sender:</span>
-        <span class="property-value" id="sender"></span>
-      </p>
-      <p class="property">
-        <div id="tags">
-        </div>
-      </p>
-
-      <div id="pages">
-
-      </div>
-    </div>
   </body>
 </html>
-
