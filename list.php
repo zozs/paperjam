@@ -25,7 +25,7 @@
               <th>Pages</th>
               <th>Tags</th>
           </thead>
-          <tbody>
+          <tbody ng-cloak>
             <tr ng-repeat="document in documents">
               <td>
                 <a href="view.php?id={{ document.id }}">
@@ -43,7 +43,11 @@
                 </a>
               </td>
               <td>{{ document.pages.length }}</td>
-              <td><span class="tag" ng-repeat="tag in document.tags">{{ tag }}</span></td>
+              <td>
+                <span ng-repeat="tag in document.tags">
+                  <span class="label label-primary" >{{ tag }}</span>
+                </span>
+              </td>
             </tr>
           </tbody>
         </table>

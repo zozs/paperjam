@@ -17,6 +17,7 @@
   ],
   "dependencies": {
     "bootstrap": "~3.3.5",
-    "angular-bootstrap": "~0.13.0"
+    "angular-bootstrap": "~0.13.0",
+    "image-picker": "~0.2.4"
   }
 }

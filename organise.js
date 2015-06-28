@@ -1,230 +1,198 @@
-$(document).ready(function() {
-  $('#organise-accordion').accordion({
-    heightStyle: 'content'
-  });
-  
-  $('#date').datepicker();
-  $('#date').datepicker('option', 'dateFormat', 'yy-mm-dd');
-  $('#date').datepicker('setDate', new Date());
+paperjamApp.controller('OrganiseCtrl', function ($scope, $http, $modal, $q, unorganised, alerter) {
+  $scope.selectedPages = [];
+  $scope.unorganisedData = unorganised.data;
 
-  $('.status-complete').click(function() {
-    location.reload();
+  $http.get('senders').success(function (data) {
+    $scope.senders = data.senders;
   });
 
-  $('#organise-order').sortable();
-  $('#organise-order').disableSelection();
+  $http.get('tags').success(function (data) {
+    $scope.tags = data.tags;
+  });
 
-  $('#dialog-confirm').dialog({
-    autoOpen: false,
-    resizable: false,
-    modal: true,
-    buttons: {
-      'Delete pages': function() {
-        delete_pages();
-        $(this).dialog('close');
-      },
-      'Cancel': function() {
-        $(this).dialog('close');
-      }
+  $scope.selectedPagesChanged = function (oldValues, newValues) {
+    // We need to maintain the same array, not create a new one.
+    $scope.selectedPages.length = 0;
+    for (var i = 0; i < newValues.length; i++) {
+      $scope.selectedPages.push($scope.unorganisedData.unorganised[newValues[i]]);
     }
+  };
+
+  $scope.organiseTabs = {
+    select: true,
+    order: false,
+    sender: false
+  };
+
+  $scope.datePicker = {
+    open: function ($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      $scope.datePicker.opened = true;
+    },
+    opened: false,
+    options: {
+      formatYear: 'yyyy',
+      startingDay: 1
+    },
+    dt: new Date()
+  };
+
+  $scope.newEntryInfo = {
+    sender: '',
+    tags: [],
+    tag: '',
+    relatedTags: [],
+    relatedTagsCanceler: null
+  };
+
+  $scope.$watch('newEntryInfo.sender', function (value) {
+    // When sender is changed, do request to find related tags.
+    if (value === '') {
+      return;
+    }
+    var encoded_sender = encodeURIComponent(value);
+    if ($scope.newEntryInfo.relatedTagsCanceler) {
+      // Abort previous query.
+      $scope.newEntryInfo.relatedTagsCanceler.resolve();
+    }
+
+    $scope.newEntryInfo.relatedTagsCanceler = $q.defer();
+    $http.get('senders/' + encoded_sender + '/relatedtags',
+      {timeout: $scope.newEntryInfo.relatedTagsCanceler })
+      .success(function (data) {
+        $scope.newEntryInfo.relatedTagsCanceler = null;
+        $scope.newEntryInfo.relatedTags.length = 0;
+        for (var i = 0; i < data.related.length; i++) {
+          $scope.newEntryInfo.relatedTags.push(data.related[i]);
+        }
+      }).error(function (err) {
+        console.log('got err from reltag: ', err);
+      });
   });
 
-  $('#tag-form').submit(function(event) {
-    add_tag($('#tag').val());
-    $('#tag').val('');
-    return false;
-  });
+  $scope.addTag = function (tag) {
+    if (tag != '' && $scope.newEntryInfo.tags.indexOf(tag) === -1) {
+      $scope.newEntryInfo.tags.push(tag);
+      $scope.newEntryInfo.tag = '';
+    }
+  };
+  
+  $scope.removeTag = function (index) {
+    $scope.newEntryInfo.tags.splice(index, 1);
+  };
 
-  $('#create-document').click(create_document);
-  $('#delete-pages').click(function() {
-    $('#dialog-confirm').dialog('open');
-  });
+  $scope.createDocument = function () {
+    alerter.clearAlerts();
+    var pages = $scope.selectedPages.map(function (p) { return p.id; });
 
-  // On sender change, load related tags.
-  $('#sender').change(function() {
-    load_related_tags($(this).val());
-  });
+    /* First validate the data. Perhaps this should be done in a more Angular way? */
+    var validationFailed = false;
+    if ($scope.selectedPages.length == 0) {
+      alerter.addAlert('warning', "You must select at least one page!");
+      validationFailed = true;
+    }
+    if ($scope.newEntryInfo.sender == '') {
+      alerter.addAlert('warning', "You must supply a sender!");
+      validationFailed = true;
+    }
+    if ($scope.datePicker.dt === undefined) {
+      alerter.addAlert('warning', "You must provide a valid date!");
+      validationFailed = true;
+    }
+    if (validationFailed) {
+      return;
+    }
 
-  load_senders();
-  load_tags();
-  load_unorganised();
+    $http.post('documents', {
+      pages: pages,
+      tags: $scope.newEntryInfo.tags,
+      sender: $scope.newEntryInfo.sender,
+      date: $scope.datePicker.dt.toISOString().slice(0, 10)
+    }).success(function () {
+      // We should probably reset everything here.
+      $scope.selectedPages.length = 0;
+      unorganised.loadData();
+      $scope.newEntryInfo.sender = '';
+      $scope.newEntryInfo.tags.length = 0;
+      $scope.newEntryInfo.tag = '';
+      $scope.organiseTabs.select = true; // activate start tab again.
+
+      alerter.addAlert('success', 'Document was successfully created');
+    }).error(function (err) {
+      if (err.errors) {
+        for (var i = 0; i < err.errors.length; i++) {
+          alerter.addAlert('danger', err.errors[i]);
+        }
+      }
+    });
+  };
+
+  $scope.deleteSelected = function () {
+    // Show modal dialog.
+    var modalInstance = $modal.open({
+      animation: false,
+      templateUrl: 'confirmDeleteContent.html',
+      controller: 'ConfirmDeleteInstanceCtrl',
+      size: 'sm'
+    });
+
+    modalInstance.result.then(function () {
+      // OK! Delete everything.
+      $scope.doDeletePages($scope.selectedPages);
+    }, function () {
+      // Cancel.
+    });
+  };
+
+  $scope.doDeletePages = function (pages) {
+    var requests = pages.map(function (p) {
+      return $http.delete($scope.pageUrl(p.id));
+    });
+
+    $q.all(requests).then(function () {
+      // succeeded, reload:
+      unorganised.loadData();
+    }, function (reason) {
+      // something failed.
+      alert('Failed to delete at least one page. See console');
+      console.log('Failed to delete, reject response was:', reason);
+      unorganised.loadData();
+    });
+  }
+
+  $scope.moveDown = function (index) {
+    if (index == $scope.selectedPages.length - 1) return; // sanity check.
+    $scope.selectedPages.splice(index + 1, 0, $scope.selectedPages.splice(index, 1)[0]);
+  };
+
+  $scope.moveUp = function (index) {
+    if (index == 0) return; // sanity check.
+    $scope.selectedPages.splice(index - 1, 0, $scope.selectedPages.splice(index, 1)[0]);
+  };
 });
 
-function add_tag(tag) {
-  var tag_elem = $('<li>').addClass('tag').text(tag);
-  tag_elem.click(function() {
-    tag_elem.remove();
-  });
-  $('#organise-tags').append(tag_elem);
-}
+paperjamApp.controller('ConfirmDeleteInstanceCtrl', function ($scope, $modalInstance) {
+  $scope.ok = function () {
+    $modalInstance.close();
+  };
 
-function create_document() {
-  var pages = selected_pages();
-  var tags = current_tags();
-  var sender = $('#sender').val();
-  var date = $('#date').val();
+  $scope.cancel = function () {
+    $modalInstance.dismiss('cancel');
+  };
+});
 
-  $.ajax({
-    url: 'documents',
-    type: 'POST',
-    timeout: 25000,
-    contentType: 'application/json',
-    data: JSON.stringify({
-      pages: pages,
-      tags: tags,
-      sender: sender,
-      date: date
-    })      
-  }).done(function() {
-    /* Alles gut. */
-    $('.status-failed').hide();
-    $('.status-complete').show();
-    $('#organise-accordion').hide();
-  }).fail(function() {
-    /* Failed. */
-    $('.status-failed').show();
-  });
-}
+paperjamApp.directive('imagePickerRepeatDone', function ($timeout) {
+  return function (scope, element, attrs) {
+    if (scope.$last) {
+      $timeout(function () {
+        $('.image-picker').imagepicker({
+          show_label: true,
+          changed: scope.selectedPagesChanged
+        });
+      }, 0);
+    }
+  };
+});
 
-function current_tags() {
-  return $('#organise-tags li')
-    .map(function() {
-      return $(this).text();
-    }).get();
-}
-
-function delete_pages() {
-  var pages = selected_pages();
-  var requests = $.map(pages, function(p) {
-    return $.ajax({
-        url: 'pages/' + p,
-        type: 'delete',
-        dataType: 'json',
-        timeout: 25000
-      }).fail(function() {
-        /* Handle failure. Care must be taken since this may be launched
-         * multiple times since deletion is done in parallel for each page. */
-        alert('Failed to delete page with id ' + p);
-      });
-  });
-  $.when.apply($, requests).then(function() {
-    /* Reload pages. */
-    load_unorganised();
-  });
-}
-
-function file_img(file) {
-  return $('<img>', {
-    src: file_img_url(file),
-    alt: file
-  });
-}
-
-function file_img_url(file) {
-  return 'files/' + file;
-}
-
-function load_related_tags(sender) {
-  var encoded_sender = encodeURIComponent(sender);
-  $.ajax({
-    url: 'senders/' + encoded_sender + '/relatedtags',
-    dataType: 'json',
-    timeout: 25000
-  }).done(function(data) {
-    var current = current_tags();
-    var related = $('#related-tags ul');
-    related.empty();
-    // First filter out already selected tags.
-    var filtered = $(data.related).not(current).get();
-    $.each(filtered, function(_, tag) {
-      var item = $('<li>').addClass('tag').text(tag);
-      item.click(function() {
-        add_tag(tag);
-      });
-      related.append(item);
-    });
-  }).fail(function() {
-  });
-}
-
-function load_senders() {
-  $.ajax({
-    url: 'senders',
-    dataType: 'json',
-    timeout: 25000
-  }).done(function(data) {
-    $('#sender').autocomplete({
-      source: data.senders,
-      change: function(event, ui) { /*load_related_tags(ui.item);*/ }
-    });
-  });
-}
-
-function load_tags() {
-  $.ajax({
-    url: 'tags',
-    dataType: 'json',
-    timeout: 25000
-  }).done(function(data) {
-    $('#tag').autocomplete({
-      source: data.tags
-    });
-  });
-}
-
-function load_unorganised() {
-  $.ajax({
-    url: 'unorganised',
-    dataType: 'json',
-    timeout: 25000
-  }).done(function(data) {
-    $('#unorganised-pages').empty();
-    $('#organise-order').empty();
-    $.each(data.unorganised, function(i, page) {
-      var p = $('<div>').addClass('page')
-        .append($('<a>', {
-          href: file_img_url(page.file),
-          target: '_blank'
-        })
-          .append(file_img(page.file)))
-        .append($('<label>')
-          .text(page.file)
-          .append($('<input>', {
-            type: 'checkbox'
-          })
-            .data('file', page.file)
-            .data('id', page.id)
-            .change(function() {
-              var data = $(this).data();
-              if ($(this).is(':checked')) {
-                $(this).parents('.page').addClass('page-selected');
-                var row = $('<tr>')
-                  .data(data)
-                  .attr('id', 'organise-order-row-' + data.id)
-                  .append($('<td>')
-                    .append(file_img(data.file)))
-                  .append($('<td>').text(data.file));
-                  
-                $('#organise-order').append(row);
-              } else {
-                $(this).parents('.page').removeClass('page-selected');
-                $('#organise-order tr').filter(function() {
-                  return $(this).data('id') == data.id;
-                }).remove();
-              }
-            })          
-          )
-        );
-      $('#unorganised-pages').append(p);
-    });
-  }).fail(function() {
-    alert("Failed to get unorganised pages.");
-  });
-}
-
-function selected_pages() {
-  return $('#organise-order tr')
-    .map(function() {
-      return $(this).data('id');
-    }).get();
-}

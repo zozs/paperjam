@@ -8,6 +8,11 @@ body {
   src: url(images/MomsTypewriter.ttf);
 }
 
+/* Angular stuff */
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+  display: none !important;
+}
+
 .navbar-brand {
   font-family: 'MomsTypewriter';
 }
@@ -18,6 +23,18 @@ body {
 
 progress {
 	display: none;
+}
+
+img.image_picker_image {
+  height: 200px;
+}
+
+.thumbnail.selected a.image-picker-thumbnail-link {
+  color: white;
+}
+
+.clickable-label {
+  cursor: pointer;
 }
 
 .status-complete {
@@ -39,15 +56,6 @@ progress {
   margin-top: 20px;
 }
 
-a {
-	text-decoration: none;
-	color: black;
-}
-
-.big-button-icon {
-  font-size: 50px;
-}
-
 #upload-status-complete:hover {
 	background-color: lightgreen;
 }
@@ -56,16 +64,6 @@ a {
 	font-size: 0.9em;
 }
 
-#unorganised-notification {
-  border: 1px solid black;
-  border-radius: 10px;
-  background-color: LemonChiffon;
-  margin: 20px;
-}
-
-#unorganised-notification:hover {
-  background-color: moccasin;
-}
 
 .organise-order-box {
   padding: 15px;

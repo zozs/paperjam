@@ -23,31 +23,37 @@ if (!preg_match('/^\d+$/', $_GET['id'])) {
     <title>Paperjam - view document</title>
   </head>
 
-  <body ng-controller="ViewDocumentCtrl">
+  <body ng-controller="CommonCtrl">
     <?php $navbarCurrent = basename(__FILE__); require('navbar.php'); ?>
     
-    <div class="container">
+    <div class="container" ng-controller="ViewDocumentCtrl">
       <div class="row">
         <div class="col-md-4">
-          <h3>Date</h3>
+          <label>Date</label>
           <p>{{ document.date }}</p>
         </div>
         <div class="col-md-4">
-          <h3>Sender</h3>
+          <label>Sender</label>
           <p>{{ document.sender }}</p>
         </div>
         <div class="col-md-4">
-          <h3>Tags</h3>
-          <span class="tag" ng-repeat="tag in document.tags">{{ tag }}</span>
+          <label>Tags</label>
+          <p>
+            <span ng-repeat="tag in document.tags">
+              <span class="label label-primary">{{ tag }}</span>
+            </span>
+          </p>
         </div>
       </div>
       <div class="row">
-        <h3>Pages</h3>
-        <div id="pages">
-          <div class="page" ng-repeat="page in document.pages">
-            <a href="files/{{ page }}" target="_blank">
-              <img src="files/{{ page }}" alt="{{ page }}">
-            </a>
+        <div class="col-md-12">
+          <label>Pages</label>
+          <div id="pages">
+            <div class="page" ng-repeat="page in document.pages">
+              <a href="{{ fileUrl(page) }}" target="_blank">
+                <img src="{{ fileUrl(page) }}" alt="{{ page }}">
+              </a>
+            </div>
           </div>
         </div>
       </div>

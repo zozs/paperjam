@@ -10,7 +10,7 @@ function printMenuItem($filename, $text) {
 }
 ?>
     <nav class="navbar navbar-default">
-      <div class="container-fluid">
+      <div class="container">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" ng-init="isCollapsed = true" ng-click="isCollapsed = !isCollapsed">
@@ -29,18 +29,26 @@ function printMenuItem($filename, $text) {
             printMenuItem("list.php", "List");
             printMenuItem("find.php", "Find");
             printMenuItem("add.php", "Add");
-            printMenuItem("organise.php", "Organise");
+            /* organise is a special case because of the badge. */
 ?>
+<?php if ($navbarCurrent === "organise.php"): ?>
+            <li class="active">
+<?php else: ?>
+            <li>
+<?php endif; ?>
+              <a href="organise.php" ng-controller="UnorganisedCtrl">
+                Organise <span class="badge" ng-show="unorganisedData.unorganised.length > 0" ng-cloak>
+                  {{ unorganisedData.unorganised.length }}
+                </span>
+              </a>
+            </li>
           </ul>
-          <p ng-controller="UnorganisedCtrl" class="navbar-text navbar-right">
-            <a href="organise.html" class="navbar-link">
-              <ng-pluralize count="unorganised.length"
-                   when="{'0': 'You have no unorganised pages.',
-                          'one': 'You have 1 unorganised page.',
-                          'other': 'You have {} unorganised pages.'}">
-              </ng-pluralize>
-            </a>
-          </p>
         </div><!-- /.navbar-collapse -->
       </div><!-- /.container-fluid -->
     </nav>
+    
+    <!-- ALERTS -->
+    <div class="container" ng-controller="AlertCtrl">
+      <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)" ng-cloak>{{alert.msg}}</alert>
+    </div>
+

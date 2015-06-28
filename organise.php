@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html>
+<html ng-app="paperjamApp">
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,105 +8,129 @@
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="paperjam.css" />
     <link rel="icon" href="images/favicon.png" />
+    <!-- Image picker -->
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <link rel="stylesheet" href="bower_components/image-picker/image-picker/image-picker.css" />
+    <script src="bower_components/image-picker/image-picker/image-picker.min.js"></script>
     <title>Paperjam - organise</title>
-
-
-    <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/themes/smoothness/jquery-ui.css" />
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js"></script>
   </head>
 
-  <body>
+  <body ng-controller="CommonCtrl">
     <?php $navbarCurrent = basename(__FILE__); require('navbar.php'); ?>
 
     <div class="container">
-      <div id="organise-accordion">
-        <h3>Select pages</h3>
-        <div>
+      <div ng-controller="OrganiseCtrl">
+      <tabset>
+        <tab heading="Select pages" active="organiseTabs.select">
           <p>Select the pages you want to staple together to form a document.</p>
-
-          <div id="unorganised-pages">
-            <!--
-            <div class="page">
-              <a href="images/open-iconic/svg/document.svg" target="_blank">
-                <img src="images/open-iconic/svg/document.svg" alt="Document" />
-              </a>
-              <label>
-                Text
-                <input type="checkbox" data-file="document.svg" data-id="0" />
-              </label>
-            </div>
-            -->
+          <div>
+            <select multiple="multiple" class="image-picker">
+              <option data-img-src="{{ fileUrl(page.file) }}" value="{{ $index }}" ng-repeat="page in unorganisedData.unorganised" data-img-label="<a class='image-picker-thumbnail-link' href='{{ fileUrl(page.file) }}' target='_blank'>{{ fileUrl(page.file) }}</a>" image-picker-repeat-done></option>
+            </select>
           </div>
-          <div class="clearfix"></div>
           <p>
-            Proceed to the next section to proceed with creating a document, or <button type="button" id="delete-pages">Delete the selected pages</button>
+            Proceed to the next tab to proceed with creating a document, or <button class="btn btn-danger" type="button" ng-click="deleteSelected()">Delete the selected pages</button>
           </p>
-        </div>
-        
-        <h3>Order</h3>
-        <div>
-          <table class="organise-order-box">
-            <tbody id="organise-order">
-              <!--
+        </tab>
+        <tab heading="Order" active="organiseTabs.order">
+          <table class="table">
+            <thead>
               <tr>
-                <td><img src="images/open-iconic/svg/document.svg" alt="Document" /></td>
-                <td>Text</td>
+                <th>#</th>
+                <th>Filename</th>
+                <th>Reorder</th>
               </tr>
-              -->
+            </thead>
+            <tbody>
+              <tr ng-repeat="page in selectedPages">
+                <td>{{ $index + 1 }}</td>
+                <td><a href="{{ fileUrl(page.file) }}" target="_blank">{{ page.file }}</a></td>
+                <td>
+                  <div class="btn-group btn-group-xs" role="group">
+                    <button type="button" class="btn btn-primary" ng-disabled="$first" ng-click="moveUp($index)"><span class="glyphicon glyphicon-arrow-up"></span></button>
+                    <button type="button" class="btn btn-primary" ng-disabled="$last" ng-click="moveDown($index)"><span class="glyphicon glyphicon-arrow-down"></span></button>
+                  </div>
+                </td>
+              </tr>
             </tbody>
           </table>
-          
-        </div>
-
-        <h3>Sender, date, tags</h3>
-        <div class="organise-form">
-          <label>
-            Sender
-            <input id="sender" />
-          </label>
-
-          <label>
-            Date
-            <input id="date" />
-          </label>
-          
-          <form id="tag-form">
-            <label>
-              Tag
-              <input id="tag" />
-            </label>
+        </tab>
+        <!--<tab heading="Sender, date, tags" disable="selectedPages.length == 0">-->
+        <tab heading="Sender, date, tags" active="organiseTabs.sender">
+          <form name="newDocumentForm">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="newEntrySender">Sender</label>
+                  <input type="text" class="form-control" id="newEntrySender" ng-model="newEntryInfo.sender" typeahead="sender for sender in senders | filter:$viewValue | limitTo:8" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label>Related tags</label>
+                <!-- TODO: return the amount of times a tag has been used for this sender,
+                     order the tags by this number, and perhaps show the number as a
+                     badge next to the tag? -->
+                <p>
+                  <span ng-repeat="tag in newEntryInfo.relatedTags">
+                    <span class="label label-primary clickable-label" ng-click="addTag(tag)">{{ tag }}</span>
+                  </span>
+                </p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="newEntryDate">Date</label>
+                  <p class="input-group">
+                    <input type="text" class="form-control" datepicker-popup="yyyy-MM-dd" ng-model="datePicker.dt" is-open="datePicker.opened" datepicker-options="datePicker.options" ng-required="true" close-text="Close" id="newEntryDate" />
+                    <span class="input-group-btn">
+                      <button type="button" class="btn btn-default" ng-click="datePicker.open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="newEntryTags">Tags</label>
+                  <p class="input-group">
+                    <input type="text" class="form-control" id="newEntryTags" ng-model="newEntryInfo.tag" typeahead="tag for tag in tags | filter:$viewValue | limitTo:8">
+                    <span class="input-group-btn">
+                      <button type="button" class="btn btn-default" ng-click="addTag(newEntryInfo.tag)"><i class="glyphicon glyphicon-plus"></i></button>
+                    </span>
+                  </p>
+                  <p>
+                    <span ng-repeat="tag in newEntryInfo.tags">
+                      <span class="label label-primary clickable-label" ng-click="removeTag($index)">{{ tag }}</span>
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <button type="button" class="btn btn-primary" ng-click="createDocument()">Create document</button>
+              </div>
+            </div>
           </form>
-
-          <ul id="organise-tags" class="tag-list remove-tag-list">
-          </ul>
-
-          <button type="button" id="create-document">Create document</button>
-
-          <div id="related-tags">
-            <h4>Related tags</h4>
-            <ul class="tag-list add-tag-list">
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div class="status-complete">
-        <p>Document created sucessfully! Click to organise a new one.</p>
-      </div>
-
-      <div class="status-failed">
-        <p>Failed to create a new document!</p>
+        </tab>
+      </tabset>
       </div>
     </div>
 
     <!-- DIALOGS -->
-    <div id="dialog-confirm" title="Delete selected pages?">
-      <p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>
+    <script type="text/ng-template" id="confirmDeleteContent.html">
+      <div class="modal-header">
+        <h3 class="modal-title">Delete selected pages?</h3>
+      </div>
+      <div class="modal-body">
         The selected pages will be permanently deleted from both disk and database,
         and can not be recovered! Are you sure?
-      </p>
-    </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" ng-click="ok()">Delete</button>
+        <button class="btn btn-primary" ng-click="cancel()">Cancel</button>
+      </div>
+    </script>    
 
     <!-- scripts and stuff -->
     <script src="bower_components/angular/angular.min.js"></script>
