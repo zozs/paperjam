@@ -1,67 +1,71 @@
-$(document).ready(function() {
-    $('#upload-button').click(function() {
-        var formData = new FormData($('form')[0]);
-        /* If we want individual progress for each file, we'll have to fire
-           one AJAX request per file, let's do that sometime in the future. */
-        $('#upload-status progress').show();
-        $('#upload-status p').empty();
-        $('#upload-status-complete').hide();
-        $.ajax({
-            url: 'pages',
-            type: 'POST',
-            xhr: function() {
-                var myXhr = $.ajaxSettings.xhr();
-                if (myXhr.upload) {
-                    myXhr.upload.addEventListener('progress', upload_progress,
-                        false);
-                }
-                return myXhr;
-            },
-            success: upload_complete,
-            error: upload_failed,
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData: false
-        });
-    });
+paperjamApp.controller('AddPageCtrl', function($scope, $http, $modal, alerter, unorganised) {
+  $scope.uploadActive = false;
+  $scope.uploadState = null; /* or 'success' */
+  $scope.totalSize = 100;
+  $scope.currentUploaded = 0;
 
-    $('#add-more-button').click(add_file_field);
+  $scope.addFileField = function () {
+    var file_row = $('<div/>').addClass('row top10');
+    var file_control = $('<input/>', {
+      type: 'file',
+      name: 'file[]',
+      'multiple': 'multiple'
+    }).addClass('pull-left');
+    var file_remove  = $('<button/>', {
+      type: 'button',
+      click: function() {
+        // Deletes this file form the form.
+        file_control.remove();
+        $(this).remove();
+        file_row.remove();
+      }
+    }).addClass('btn btn-primary btn-xs').append('<span class="glyphicon glyphicon-minus"></span>');
+    file_row.append(file_remove).append(file_control);
+    $('form').append(file_row);
+  };
+
+  $scope.upload = function () {
+    var formData = new FormData($('form')[0]);
+    /* If we want individual progress for each file, we'll have to fire
+       one AJAX request per file, let's do that sometime in the future. */
+    $scope.uploadActive = true;
+    $.ajax({
+      url: 'pages',
+      type: 'POST',
+      xhr: function() {
+        var myXhr = $.ajaxSettings.xhr();
+        if (myXhr.upload) {
+          myXhr.upload.addEventListener('progress', $scope.uploadProgress, false);
+        }
+        return myXhr;
+      },
+      success: $scope.uploadComplete,
+      error: $scope.uploadFailed,
+      data: formData,
+      cache: false,
+      contentType: false,
+      processData: false
+    });
+  };
+
+  $scope.uploadComplete = function () {
+    $scope.uploadActive = false;
+    $scope.uploadState = 'success';
+    alerter.addAlert('success', 'Upload completed successfully');
+    unorganised.loadData();
+  }
+
+  $scope.uploadFailed = function (e, textStatus) {
+    $scope.uploadActive = false;
+    $scope.uploadState = 'danger';
+    alerter.addAlert('danger', 'Upload failed with message: ' + textStatus);
+  }
+
+  $scope.uploadProgress = function (e) {
+    if (e.lengthComputable) {
+      $scope.totalSize = e.total;
+      $scope.currentUploaded = e.loaded;
+    }
+  }
 });
 
-function add_file_field() {
-    var file_row = $('<div/>').addClass('upload-row');
-    var file_control = $('<input/>', {
-        type: 'file',
-        name: 'file[]',
-        'multiple': 'multiple'
-    });
-    var file_remove  = $('<input/>', {
-        type: 'button',
-        value: '-',
-        click: function() {
-            // Deletes this file form the form.
-            file_control.remove();
-            $(this).remove();
-        }
-    });
-    file_row.append(file_control).append(file_remove);
-    $('form').append(file_row);
-}
-
-function upload_complete() {
-    $('#upload-status progress').hide();
-    $('#upload-status-complete').show();
-}
-
-function upload_failed(e, textStatus) {
-    $('#upload-status progress').hide();
-    $('#upload-status-complete').hide();
-    $('#upload-status p').text('Upload failed! ' + textStatus);
-}
-
-function upload_progress(e) {
-    if (e.lengthComputable) {
-        $('#upload-status progress').attr({value: e.loaded, max: e.total});
-    }
-}

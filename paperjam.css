@@ -37,44 +37,8 @@ img.image_picker_image {
   cursor: pointer;
 }
 
-.status-complete {
-	display: none;
-	border: 1px solid black;
-	border-radius: 10px;
-	background-color: PaleGreen;
-	padding: 10px;
-  cursor: pointer;
-  margin-top: 20px;
-}
-
-.status-failed {
-	display: none;
-	border: 1px solid black;
-	border-radius: 10px;
-	background-color: LightSalmon;
-	padding: 10px;
-  margin-top: 20px;
-}
-
-#upload-status-complete:hover {
-	background-color: lightgreen;
-}
-
-#upload-status-complete p {
-	font-size: 0.9em;
-}
-
-
-.organise-order-box {
-  padding: 15px;
-  border: 1px solid lightgray;
-  width: 100%;
-}
-
-#organise-order img {
-  width: 35px;
-  height: 50px;
-}
+.top10 { margin-top: 10px; }
+.top30 { margin-top: 30px; }
 
 .page {
   width: 220px;
@@ -104,14 +68,6 @@ img.image_picker_image {
   text-align: left;
 }
 
-.add-tag-list {
-  list-style: circle inside url('images/open-iconic/svg/plus.svg');
-}
-
-.remove-tag-list {
-  list-style: circle inside url('images/open-iconic/svg/x.svg');
-}
-
 .tag {
   border: 1px solid gray;
   border-radius: 5px;
@@ -127,21 +83,6 @@ img.image_picker_image {
   padding: 3px 3px 3px 7px;
 }
 
-.organise-form input,
-.organise-form label {
-  text-align: left;
-  display: block;
-}
-
-.organise-form label {
-  margin-top: 10px;
-  font-size: 0.9em;
-}
-
-#dialog-confirm {
-  text-align: left;
-  font-size: 0.8em;
-}
 
 .document-list img {
   width: auto;
@@ -174,8 +115,4 @@ img.image_picker_image {
 .document-list tbody tr:hover {
   background-color: rgb(210,210,210);
   cursor: pointer;
-}
-
-.property-name {
-  font-weight: bold;
 }

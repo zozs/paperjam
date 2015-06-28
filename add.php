@@ -9,34 +9,26 @@
     <link rel="stylesheet" href="paperjam.css" />
     <link rel="icon" href="images/favicon.png" />
     <title>Paperjam - add document</title>
-    <!-- temp, until adapted this code to angular -->
+    <!-- AngularJS's support for file uploads is limited, we must use JQuery. -->
     <script src="bower_components/jquery/dist/jquery.min.js"></script>
   </head>
 
   <body>
     <?php $navbarCurrent = basename(__FILE__); require('navbar.php'); ?>
     
-    <div class="container">
+    <div class="container" ng-controller="AddPageCtrl">
       <form enctype="multipart/form-data">
-        <div class="upload-row">
-          <input name="file[]" type="file" multiple="multiple" /><input type="button" value="-" disabled="disabled" />
+        <div class="row top10">
+          <button type="button" class="btn btn-primary btn-xs" disabled="disabled"><span class="glyphicon glyphicon-minus"></span></button><input class="pull-left" name="file[]" type="file" multiple="multiple" />
         </div>
       </form>
-      <input type="button" id="add-more-button" value="Add more" />
-      <input id="upload-button" type="button" value="Upload" />
-      <div id="upload-status">
-        <progress></progress>
-        <p>
-        </p>
+      <div class="row top30">
+        <button type="button" class="btn btn-primary" ng-click="addFileField()">Add more</button>
+        <button type="button" class="btn btn-primary" ng-click="upload()">Upload</button>
       </div>
-      <a href="organise.html">
-        <div class="status-complete" id="upload-status-complete">
-          <h3>Upload complete!</h3>
-          <p>
-            Click this box to organise the uploaded files.
-          </p>
-        </div>
-      </a>
+      <div class="row top30">
+        <progressbar max="totalSize" value="currentUploaded" ng-class="{'progress-striped': true, 'active': uploadActive}" type="{{uploadState}}"></progressbar>
+      </div>
     </div>
     
     <!-- scripts and stuff -->
