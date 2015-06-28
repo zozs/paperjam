@@ -25,6 +25,11 @@ function response_json_string($app, $status, $jsonString) {
   $app->response->setBody($jsonString);
 }
 
+function response_not_found($app) {
+  response_json($app, 404, []);
+  $app->stop();
+}
+
 function response_server_error($app, $message) {
   $error = ['errors' => [$message]];
   response_json($app, 500, $error);
@@ -118,7 +123,11 @@ $app->get('/documents/:document_id', function($document_id) use ($db, $app) {
               documents.id=?) x) y;";
   $stmt = $db->prepare($sql);
   $stmt->execute([$document_id]);
-  response_json_string($app, 200, $stmt->fetchColumn());
+  $document = $stmt->fetchColumn();
+  if ($document == "") {
+    response_not_found($app);
+  }
+  response_json_string($app, 200, $document);
 });
 
 $app->get('/unorganised', function() use ($db, $app) {
@@ -302,22 +311,28 @@ $app->post('/pages', function() use ($db, $app, $PATH) {
   response_json($app, 200, []);
 });
 
-/* PUT handlers */
-$app->put('/unseen/:unseen_id', function($unseen_id) use ($db, $app) {
-  validate_params($app, [Validators::$AVAILABLE, Validators::$COMMENT]);
-  $sql = "UPDATE unseen SET comment=?, available=? WHERE id=?;";
-  execute_single_nonselect($app, $db, $sql, [$app->request->params('comment'),
-    $app->request->params('available'), $unseen_id]);
-});
-
-$app->put('/watched/:watched_id', function($watched_id) use ($db, $app) {
-  validate_params($app, [Validators::$DATE, Validators::$RATING]);
-  $sql = "UPDATE watched SET date_watched=?, rating=? WHERE id=?;";
-  execute_single_nonselect($app, $db, $sql, [$app->request->params('date'),
-    $app->request->params('rating'), $watched_id]);
-});
-
 /* DELETE handlers */
+
+$app->delete('/documents/:document_id', function($document_id) use ($db, $app) {
+  /* This should remove the metadata about the document, but not remove the
+   * files from disk. Instead they should be marked as unorganised again. */
+  $db->beginTransaction();
+  $sql1 = "UPDATE pages SET document=NULL, page_order=NULL WHERE document=?;";
+  $stmt1 = $db->prepare($sql1);
+  $stmt2 = $db->prepare("DELETE FROM documents_tags WHERE did=?;");
+  $stmt3 = $db->prepare("DELETE FROM documents WHERE id=? ");
+
+  $stmt1->execute([$document_id]);
+  $stmt2->execute([$document_id]);
+  $stmt3->execute([$document_id]);
+  if ($stmt3->rowCount() != 1) {
+    /* Nothing deleted, assume 404. */
+    $db->rollBack();
+    response_not_found($app);
+  }
+  $db->commit();
+  response_json($app, 204, []); /* Done */
+});
 
 $app->delete('/pages/:page_id', function($page_id) use ($db, $app, $PATH) {
   $db->beginTransaction();
@@ -325,8 +340,8 @@ $app->delete('/pages/:page_id', function($page_id) use ($db, $app, $PATH) {
   $stmt->execute([$page_id]);
   $filename = $stmt->fetchColumn();
   if ($filename === FALSE) {
-    $db->rollBack();
-    response_json($app, 404, []); /* No such database id. */
+    $db->rollBack(); /* no such database id */
+    response_not_found($app);
   }
   if (!unlink($PATH . '/' . $filename)) {
     $db->rollBack();

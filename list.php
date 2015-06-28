@@ -11,46 +11,48 @@
     <title>Paperjam - list documents</title>
   </head>
 
-  <body>
+  <body ng-controller="CommonCtrl">
     <?php $navbarCurrent = basename(__FILE__); require('navbar.php'); ?>
 
     <div class="container" ng-controller="ListDocumentsCtrl">
       <div class="row">
-        <table class="table table-condensed table-hover">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Date</th>
-              <th>Sender</th>
-              <th>Pages</th>
-              <th>Tags</th>
-          </thead>
-          <tbody ng-cloak>
-            <tr ng-repeat="document in documents">
-              <td>
-                <a href="view.php?id={{ document.id }}">
-                  <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
-                </a>
-              </td>
-              <td>
-                <a href="view.php?id={{ document.id }}">
-                  {{ document.date }}
-                </a>
-              </td>
-              <td>
-                <a href="view.php?id={{ document.id }}">
-                  {{ document.sender }}
-                </a>
-              </td>
-              <td>{{ document.pages.length }}</td>
-              <td>
-                <span ng-repeat="tag in document.tags">
-                  <span class="label label-primary" >{{ tag }}</span>
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="col-md-12">
+          <table class="table table-condensed table-hover">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Date</th>
+                <th>Sender</th>
+                <th>Pages</th>
+                <th>Tags</th>
+            </thead>
+            <tbody ng-cloak>
+              <tr ng-repeat="document in documents">
+                <td>
+                  <a href="{{ viewUrl(document.id) }}">
+                    <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
+                  </a>
+                </td>
+                <td>
+                  <a href="{{ viewUrl(document.id) }}">
+                    {{ document.date }}
+                  </a>
+                </td>
+                <td>
+                  <a href="{{ viewUrl(document.id) }}">
+                    {{ document.sender }}
+                  </a>
+                </td>
+                <td>{{ document.pages.length }}</td>
+                <td>
+                  <span ng-repeat="tag in document.tags">
+                    <span class="label label-primary" >{{ tag }}</span>
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 

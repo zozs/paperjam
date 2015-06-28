@@ -29,6 +29,12 @@ paperjamApp.factory('alerter', function () {
     alerter.alerts.push({ type: type, msg: msg });
   };
 
+  alerter.addApiErrors = function (errors) {
+    for (var i = 0; i < errors.length; i++) {
+      alerter.addAlert('danger', errors[i]);
+    }
+  };
+
   alerter.clearAlerts = function () {
     alerter.alerts.length = 0;
   };
@@ -49,11 +55,19 @@ paperjamApp.controller('UnorganisedCtrl', function($scope, $http, unorganised) {
 });
 
 paperjamApp.controller('CommonCtrl', function($scope) {
+  $scope.documentUrl = function (documentId) {
+    return 'documents/' + documentId;
+  };
+
   $scope.fileUrl = function (filename) {
     return 'files/' + filename;
   };
 
   $scope.pageUrl = function (pageId) {
     return 'pages/' + pageId;
+  };
+
+  $scope.viewUrl = function (documentId) {
+    return 'view.php?id=' + documentId;
   };
 });

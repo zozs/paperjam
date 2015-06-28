@@ -26,7 +26,7 @@ if (!preg_match('/^\d+$/', $_GET['id'])) {
   <body ng-controller="CommonCtrl">
     <?php $navbarCurrent = basename(__FILE__); require('navbar.php'); ?>
     
-    <div class="container" ng-controller="ViewDocumentCtrl">
+    <div class="container" ng-controller="ViewDocumentCtrl" ng-show="visible">
       <div class="row">
         <div class="col-md-4">
           <label>Date</label>
@@ -51,13 +51,37 @@ if (!preg_match('/^\d+$/', $_GET['id'])) {
           <div id="pages">
             <div class="page" ng-repeat="page in document.pages">
               <a href="{{ fileUrl(page) }}" target="_blank">
-                <img src="{{ fileUrl(page) }}" alt="{{ page }}">
+                <img ng-src="{{ fileUrl(page) }}" alt="{{ page }}">
               </a>
             </div>
           </div>
         </div>
       </div>
+      <div class="row">
+        <div class="col-md-12">
+          <label>Actions</label>
+          <div>
+            <button type="button" class="btn btn-danger" ng-click="deleteDocument()">Delete document</button>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <!-- dialogs -->
+    <script type="text/ng-template" id="confirmDeleteDocument.html">
+      <div class="modal-header">
+        <h3 class="modal-title">Delete current document?</h3>
+      </div>
+      <div class="modal-body">
+        The information about this document will be lost, but the pages will be
+        kept and considered unorganised. They may be deleted at the Organise page.
+        Are you sure?
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" ng-click="ok()">Delete</button>
+        <button class="btn btn-primary" ng-click="cancel()">Cancel</button>
+      </div>
+    </script>    
 
     <!-- scripts and stuff -->
     <script src="bower_components/angular/angular.min.js"></script>
@@ -65,11 +89,7 @@ if (!preg_match('/^\d+$/', $_GET['id'])) {
     <script src="paperjam.js"></script>
     <script>
       var db_id = <?= $_GET['id']; ?>;
-      paperjamApp.controller('ViewDocumentCtrl', function($scope, $http) {
-        $http.get('documents/' + db_id).success(function(data) {
-          $scope.document = data.document;
-        });
-      });
     </script>
+    <script src="view.js"></script>
   </body>
 </html>

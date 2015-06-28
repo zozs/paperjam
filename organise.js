@@ -122,9 +122,7 @@ paperjamApp.controller('OrganiseCtrl', function ($scope, $http, $modal, $q, unor
       alerter.addAlert('success', 'Document was successfully created');
     }).error(function (err) {
       if (err.errors) {
-        for (var i = 0; i < err.errors.length; i++) {
-          alerter.addAlert('danger', err.errors[i]);
-        }
+        alerter.addApiErrors(err.errors);
       }
     });
   };
