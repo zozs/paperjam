@@ -23,8 +23,8 @@
       <tabset>
         <tab heading="Select pages" active="organiseTabs.select">
           <p>Select the pages you want to staple together to form a document.</p>
-          <div>
-            <select multiple="multiple" class="image-picker">
+          <div ng-show="unorganisedData.unorganised.length > 0">
+            <select multiple="multiple" class="image-picker page-selector">
               <option data-img-src="{{ fileUrl(page.file) }}" value="{{ $index }}" ng-repeat="page in unorganisedData.unorganised" data-img-label="<a class='image-picker-thumbnail-link' href='{{ fileUrl(page.file) }}' target='_blank'>{{ fileUrl(page.file) }}</a>" image-picker-repeat-done></option>
             </select>
           </div>

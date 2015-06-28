@@ -48,8 +48,8 @@ img.image_picker_image {
   margin: 10px;
 }
 
-.page-selected {
-  border: 2px dashed PaleGreen;
+.page-selector {
+  display: none;
 }
 
 .page img {
