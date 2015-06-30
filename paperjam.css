@@ -37,6 +37,14 @@ img.image_picker_image {
   cursor: pointer;
 }
 
+.match-type {
+  color: #337ab7;
+}
+
+.active .match-type {
+  color: white;
+}
+
 .top10 { margin-top: 10px; }
 .top30 { margin-top: 30px; }
 
@@ -62,57 +70,4 @@ img.image_picker_image {
 .page input {
   display: block;
   margin: 10px auto;
-}
-
-.tag-list {
-  text-align: left;
-}
-
-.tag {
-  border: 1px solid gray;
-  border-radius: 5px;
-  background-color: PaleTurquoise;
-  margin: 5px;
-  padding: 3px 3px 3px 5px;
-  font-size: 0.7em;
-  cursor: inherit;
-}
-
-.tag-list .tag {
-  cursor: pointer;
-  padding: 3px 3px 3px 7px;
-}
-
-
-.document-list img {
-  width: auto;
-  height: 1em;
-}
-
-.document-list {
-  text-align: left;
-  border-collapse:collapse;
-}
-
-.document-list th {
-  font-weight: bold;
-}
-
-.document-list td,
-.document-list th {
-  padding: 5px 15px;
-  border: none;
-}
-
-.document-list tbody tr:nth-child(even) {
-  background-color: rgb(230,230,230);
-}
-
-.document-list tbody tr:nth-child(odd) {
-
-}
-
-.document-list tbody tr:hover {
-  background-color: rgb(210,210,210);
-  cursor: pointer;
 }

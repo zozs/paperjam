@@ -11,44 +11,68 @@
     <title>Paperjam - find documents</title>
   </head>
 
-  <body>
+  <body ng-controller="CommonCtrl">
     <?php $navbarCurrent = basename(__FILE__); require('navbar.php'); ?>
 
-    <div class="container" ng-controller="ListDocumentsCtrl">
+    <div class="container" ng-controller="FindDocumentsCtrl">
       <div class="row">
-        <table class="table table-condensed table-hover">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Date</th>
-              <th>Sender</th>
-              <th>Pages</th>
-              <th>Tags</th>
-          </thead>
-          <tbody>
-            <tr ng-repeat="document in documents">
-              <td>
-                <a href="view.php?id={{ document.id }}">
-                  <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
-                </a>
-              </td>
-              <td>
-                <a href="view.php?id={{ document.id }}">
-                  {{ document.date }}
-                </a>
-              </td>
-              <td>
-                <a href="view.php?id={{ document.id }}">
-                  {{ document.sender }}
-                </a>
-              </td>
-              <td>{{ document.pages.length }}</td>
-              <td><span class="tag" ng-repeat="tag in document.tags">{{ tag }}</span></td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- TODO: Merge these two search fields such as the first alternative
+                   in the filter list is of type 'search' thus doing a search
+                   on the given text string instead of choosing a filter -->
+        <div class="col-md-12">
+          <label for="filterBy">Search or filter</label>
+          <input type="text" id="filterBy" ng-model="filterBySelected" typeahead="match as match.name for match in filterBy($viewValue)" typeahead-template-url="filterByTemplate.html" typeahead-loading="loadingFilterBy" class="form-control">
+        </div>
+      </div>
+
+      <div class="row top10">
+        <div class="col-md-12">
+          <table class="table table-condensed table-hover">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Date</th>
+                <th>Sender</th>
+                <th>Pages</th>
+                <th>Tags</th>
+            </thead>
+            <tbody ng-cloak>
+              <tr ng-repeat="document in searchResults">
+                <td>
+                  <a href="{{ viewUrl(document.id) }}">
+                    <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
+                  </a>
+                </td>
+                <td>
+                  <a href="{{ viewUrl(document.id) }}">
+                    {{ document.date }}
+                  </a>
+                </td>
+                <td>
+                  <a href="{{ viewUrl(document.id) }}">
+                    {{ document.sender }}
+                  </a>
+                </td>
+                <td>{{ document.pages.length }}</td>
+                <td>
+                  <span ng-repeat="tag in document.tags">
+                    <span class="label label-primary" >{{ tag }}</span>
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
+
+    <!-- templates -->
+    <script type="text/ng-template" id="filterByTemplate.html">
+      <a>
+        <span bind-html-unsafe="match.label | typeaheadHighlight:query"></span>
+        <small><em><span class="match-type pull-right">&nbsp;&nbsp;&nbsp;<span bind-html-unsafe="match.model.type"></span></span></em></small>
+      </a>
+    </script>
 
     <!-- scripts and stuff -->
     <script src="bower_components/angular/angular.min.js"></script>

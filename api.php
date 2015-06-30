@@ -92,8 +92,35 @@ function valid_tags($tags) {
   return is_array($tags);
 }
 
+function escape_like($like) {
+  /* escapes LIKE statements by converting % to \% and _ to \_. Thus assuming
+   * that the escape char is the backslash. Also escapes the escape char. */
+  $e = str_replace('\\', '\\\\', $like);
+  $e = str_replace('%', '\\%', $e);
+  $e = str_replace('_', '\\_', $e);
+  return $e;
+}
+
 /* URI Handlers */
 /* GET request handlers. */
+
+$app->get('/dates/:date/documents', function($date) use ($db, $app) {
+  $sql = "SELECT ROW_TO_JSON(y) AS json FROM
+            (SELECT ARRAY_TO_JSON(COALESCE(ARRAY_AGG(ROW_TO_JSON(x)), '{}'))
+            AS documents FROM
+              (SELECT documents.id, received AS date, senders.name AS sender,
+              ARRAY(SELECT tags.name FROM documents_tags
+                JOIN tags ON documents_tags.tid=tags.id AND
+                documents_tags.did=documents.id) AS tags,
+              ARRAY(SELECT pages.file FROM pages
+                WHERE pages.document=documents.id ORDER BY page_order) AS pages
+              FROM documents JOIN senders ON documents.sender=senders.id
+              WHERE TO_CHAR(received, 'YYYY-MM-DD')=?
+              ORDER BY date DESC) x) y;";
+  $stmt = $db->prepare($sql);
+  $stmt->execute([$date]);
+  response_json_string($app, 200, $stmt->fetchColumn());
+});
 
 $app->get('/documents', function() use ($db, $app) {
   $sql = "SELECT ROW_TO_JSON(y) AS json FROM
@@ -135,10 +162,70 @@ $app->get('/unorganised', function() use ($db, $app) {
   response_json($app, 200, ['unorganised' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
 });
 
+/* Global search which tries to find tags, dates, or senders matching the
+   query. It does not search for documents which actually has the
+   tag/sender/date etc. */
+$app->get('/searchFor/:query', function($search_query) use ($db, $app) {
+  $search_query = '%' . escape_like($search_query) . '%';
+  $sql = "SELECT ROW_TO_JSON(y) AS json FROM (SELECT ARRAY_TO_JSON(
+              COALESCE(ARRAY_AGG(ROW_TO_JSON(x)), '{}')) AS matches FROM (
+          SELECT name, 'tag' AS type FROM tags WHERE name ILIKE ? UNION ALL
+          SELECT name, 'sender' AS type FROM senders WHERE name ILIKE ? UNION ALL
+          SELECT DISTINCT TO_CHAR(received, 'YYYY-MM-DD') AS name, 'date' AS type
+              FROM documents WHERE TO_CHAR(received, 'YYYY-MM-DD') ILIKE ?
+          ORDER BY name
+          ) x) y;";
+  $stmt = $db->prepare($sql);
+  $stmt->execute([$search_query, $search_query, $search_query]);
+  response_json_string($app, 200, $stmt->fetchColumn());
+});
+
+$app->get('/search/:query', function($search_query) use ($db, $app) {
+  /* Match either tag, sender, or date. */
+  $sql = "SELECT ROW_TO_JSON(y) AS json FROM
+            (SELECT ARRAY_TO_JSON(COALESCE(ARRAY_AGG(ROW_TO_JSON(x)), '{}'))
+            AS documents FROM
+            (SELECT documents.id, received AS date, senders.name AS sender,
+              ARRAY(SELECT tags.name FROM documents_tags
+                JOIN tags ON documents_tags.tid=tags.id AND
+                documents_tags.did=documents.id) AS tags,
+              ARRAY(SELECT pages.file FROM pages
+                WHERE pages.document=documents.id ORDER BY page_order) AS pages
+              FROM documents JOIN senders ON documents.sender=senders.id
+              WHERE ARRAY_LENGTH(ARRAY(SELECT tags.name FROM documents_tags
+                JOIN tags ON documents_tags.tid=tags.id AND
+                documents_tags.did=documents.id AND tags.name ILIKE ?), 1) > 0
+              OR senders.name ILIKE ?
+              OR TO_CHAR(received, 'YYYY-MM-DD') ILIKE ?
+             ORDER BY date DESC) x) y;";
+  $search_query = '%' . escape_like($search_query) . '%';
+  $stmt = $db->prepare($sql);
+  $stmt->execute([$search_query, $search_query, $search_query]);
+  response_json_string($app, 200, $stmt->fetchColumn());
+});
+
 $app->get('/senders', function() use ($db, $app) {
   $sql = "SELECT ROW_TO_JSON(x) AS json FROM (SELECT ARRAY_TO_JSON(ARRAY(
             SELECT name FROM senders ORDER BY name)) AS senders) x;";
   $stmt = $db->query($sql);
+  response_json_string($app, 200, $stmt->fetchColumn());
+});
+
+$app->get('/senders/:sender/documents', function($sender) use ($db, $app) {
+  $sql = "SELECT ROW_TO_JSON(y) AS json FROM
+            (SELECT ARRAY_TO_JSON(COALESCE(ARRAY_AGG(ROW_TO_JSON(x)), '{}'))
+            AS documents FROM
+              (SELECT documents.id, received AS date, senders.name AS sender,
+              ARRAY(SELECT tags.name FROM documents_tags
+                JOIN tags ON documents_tags.tid=tags.id AND
+                documents_tags.did=documents.id) AS tags,
+              ARRAY(SELECT pages.file FROM pages
+                WHERE pages.document=documents.id ORDER BY page_order) AS pages
+              FROM documents JOIN senders ON documents.sender=senders.id AND
+              senders.name=?
+              ORDER BY date DESC) x) y;";
+  $stmt = $db->prepare($sql);
+  $stmt->execute([$sender]);
   response_json_string($app, 200, $stmt->fetchColumn());
 });
 
@@ -161,6 +248,25 @@ $app->get('/tags', function() use ($db, $app) {
   response_json_string($app, 200, $stmt->fetchColumn());
 });
 
+$app->get('/tags/:tag/documents', function($tag) use ($db, $app) {
+  $sql = "SELECT ROW_TO_JSON(y) AS json FROM
+            (SELECT ARRAY_TO_JSON(COALESCE(ARRAY_AGG(ROW_TO_JSON(x)), '{}'))
+            AS documents FROM
+              (SELECT documents.id, received AS date, senders.name AS sender,
+              ARRAY(SELECT tags.name FROM documents_tags
+                JOIN tags ON documents_tags.tid=tags.id AND
+                documents_tags.did=documents.id) AS tags,
+              ARRAY(SELECT pages.file FROM pages
+                WHERE pages.document=documents.id ORDER BY page_order) AS pages
+              FROM documents JOIN senders ON documents.sender=senders.id
+              WHERE ? IN (
+                SELECT tags.name FROM documents_tags JOIN tags ON
+                documents_tags.tid=tags.id AND documents_tags.did=documents.id)
+              ORDER BY date DESC) x) y;";
+  $stmt = $db->prepare($sql);
+  $stmt->execute([$tag]);
+  response_json_string($app, 200, $stmt->fetchColumn());
+});
 
 /* POST request handlers and helpers. */
 function insert_or_select($app, $db, $dbname, $value) {
