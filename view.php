@@ -30,16 +30,16 @@ if (!preg_match('/^\d+$/', $_GET['id'])) {
       <div class="row">
         <div class="col-md-4">
           <label>Date</label>
-          <p>{{ document.date }}</p>
+          <p ng-cloak>{{ document.date }}</p>
         </div>
         <div class="col-md-4">
           <label>Sender</label>
-          <p>{{ document.sender }}</p>
+          <p ng-cloak>{{ document.sender }}</p>
         </div>
         <div class="col-md-4">
           <label>Tags</label>
           <p>
-            <span ng-repeat="tag in document.tags">
+            <span ng-repeat="tag in document.tags" ng-cloak>
               <span class="label label-primary">{{ tag }}</span>
             </span>
           </p>

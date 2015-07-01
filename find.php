@@ -16,9 +16,6 @@
 
     <div class="container" ng-controller="FindDocumentsCtrl">
       <div class="row">
-        <!-- TODO: Merge these two search fields such as the first alternative
-                   in the filter list is of type 'search' thus doing a search
-                   on the given text string instead of choosing a filter -->
         <div class="col-md-12">
           <label for="filterBy">Search or filter</label>
           <input type="text" id="filterBy" ng-model="filterBySelected" typeahead="match as match.name for match in filterBy($viewValue)" typeahead-template-url="filterByTemplate.html" typeahead-loading="loadingFilterBy" class="form-control">

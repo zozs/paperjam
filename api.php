@@ -47,7 +47,7 @@ $app = new \Slim\Slim(['debug' => true]);
 /* Global error handling */
 
 $app->error(function (\PDOException $e) use ($app) {
-    response_server_error($app, 'Internal server error');
+  response_server_error($app, 'Internal server error');
 });
 
 /* Matrix is [ ['post_field', validator_function, 'error_message'], ... ] */
@@ -101,38 +101,47 @@ function escape_like($like) {
   return $e;
 }
 
+function json_sql_multiple($sql, $what) {
+  return "SELECT ROW_TO_JSON(y) AS json FROM
+            (SELECT ARRAY_TO_JSON(COALESCE(ARRAY_AGG(ROW_TO_JSON(x)), '{}'))
+            AS $what FROM ($sql) x) y;";
+}
+
+function json_sql_multiple_array($sql, $what) {
+  return "SELECT ROW_TO_JSON(x) AS json FROM (SELECT ARRAY_TO_JSON(ARRAY(
+            $sql)) AS $what) x;";
+}
+
+function json_sql_multiple_documents($sql) {
+  return json_sql_multiple($sql, 'documents');
+}
+
+function sql_documents($where_clause = NULL) {
+  return "SELECT documents.id, received AS date, senders.name AS sender,
+            ARRAY(SELECT tags.name FROM documents_tags
+              JOIN tags ON documents_tags.tid=tags.id AND
+              documents_tags.did=documents.id) AS tags,
+            ARRAY(SELECT pages.file FROM pages
+              WHERE pages.document=documents.id ORDER BY page_order) AS pages
+            FROM documents JOIN senders ON documents.sender=senders.id " .
+            (is_null($where_clause) ? "" : " WHERE $where_clause ") .
+            "ORDER BY date DESC";
+}
+
 /* URI Handlers */
 /* GET request handlers. */
 
 $app->get('/dates/:date/documents', function($date) use ($db, $app) {
-  $sql = "SELECT ROW_TO_JSON(y) AS json FROM
-            (SELECT ARRAY_TO_JSON(COALESCE(ARRAY_AGG(ROW_TO_JSON(x)), '{}'))
-            AS documents FROM
-              (SELECT documents.id, received AS date, senders.name AS sender,
-              ARRAY(SELECT tags.name FROM documents_tags
-                JOIN tags ON documents_tags.tid=tags.id AND
-                documents_tags.did=documents.id) AS tags,
-              ARRAY(SELECT pages.file FROM pages
-                WHERE pages.document=documents.id ORDER BY page_order) AS pages
-              FROM documents JOIN senders ON documents.sender=senders.id
-              WHERE TO_CHAR(received, 'YYYY-MM-DD')=?
-              ORDER BY date DESC) x) y;";
+  $sql = sql_documents("TO_CHAR(received, 'YYYY-MM-DD')=?");
+  $sql = json_sql_multiple_documents($sql);
   $stmt = $db->prepare($sql);
   $stmt->execute([$date]);
   response_json_string($app, 200, $stmt->fetchColumn());
 });
 
 $app->get('/documents', function() use ($db, $app) {
-  $sql = "SELECT ROW_TO_JSON(y) AS json FROM
-            (SELECT ARRAY_TO_JSON(ARRAY_AGG(ROW_TO_JSON(x))) AS documents FROM
-              (SELECT documents.id, received AS date, senders.name AS sender,
-              ARRAY(SELECT tags.name FROM documents_tags
-                JOIN tags ON documents_tags.tid=tags.id AND
-                documents_tags.did=documents.id) AS tags,
-              ARRAY(SELECT pages.file FROM pages
-                WHERE pages.document=documents.id ORDER BY page_order) AS pages
-              FROM documents JOIN senders ON documents.sender=senders.id
-              ORDER BY date DESC) x) y;";
+  $sql = sql_documents();
+  $sql = json_sql_multiple_documents($sql);
   $stmt = $db->query($sql);
   response_json_string($app, 200, $stmt->fetchColumn());
 });
@@ -140,14 +149,7 @@ $app->get('/documents', function() use ($db, $app) {
 $app->get('/documents/:document_id', function($document_id) use ($db, $app) {
   $sql = "SELECT ROW_TO_JSON(y) AS json FROM
             (SELECT ROW_TO_JSON(x) AS document FROM
-              (SELECT documents.id, received AS date, senders.name AS sender,
-              ARRAY(SELECT tags.name FROM documents_tags
-                JOIN tags ON documents_tags.tid=tags.id AND
-                documents_tags.did=documents.id) AS tags,
-              ARRAY(SELECT pages.file FROM pages
-                WHERE pages.document=documents.id ORDER BY page_order) AS pages
-              FROM documents JOIN senders ON documents.sender=senders.id AND
-              documents.id=?) x) y;";
+              (" . sql_documents("documents.id=?") . ") x) y;";
   $stmt = $db->prepare($sql);
   $stmt->execute([$document_id]);
   $document = $stmt->fetchColumn();
@@ -167,14 +169,12 @@ $app->get('/unorganised', function() use ($db, $app) {
    tag/sender/date etc. */
 $app->get('/searchFor/:query', function($search_query) use ($db, $app) {
   $search_query = '%' . escape_like($search_query) . '%';
-  $sql = "SELECT ROW_TO_JSON(y) AS json FROM (SELECT ARRAY_TO_JSON(
-              COALESCE(ARRAY_AGG(ROW_TO_JSON(x)), '{}')) AS matches FROM (
-          SELECT name, 'tag' AS type FROM tags WHERE name ILIKE ? UNION ALL
+  $sql = "SELECT name, 'tag' AS type FROM tags WHERE name ILIKE ? UNION ALL
           SELECT name, 'sender' AS type FROM senders WHERE name ILIKE ? UNION ALL
           SELECT DISTINCT TO_CHAR(received, 'YYYY-MM-DD') AS name, 'date' AS type
               FROM documents WHERE TO_CHAR(received, 'YYYY-MM-DD') ILIKE ?
-          ORDER BY name
-          ) x) y;";
+          ORDER BY name";
+  $sql = json_sql_multiple($sql, 'matches');
   $stmt = $db->prepare($sql);
   $stmt->execute([$search_query, $search_query, $search_query]);
   response_json_string($app, 200, $stmt->fetchColumn());
@@ -182,22 +182,12 @@ $app->get('/searchFor/:query', function($search_query) use ($db, $app) {
 
 $app->get('/search/:query', function($search_query) use ($db, $app) {
   /* Match either tag, sender, or date. */
-  $sql = "SELECT ROW_TO_JSON(y) AS json FROM
-            (SELECT ARRAY_TO_JSON(COALESCE(ARRAY_AGG(ROW_TO_JSON(x)), '{}'))
-            AS documents FROM
-            (SELECT documents.id, received AS date, senders.name AS sender,
-              ARRAY(SELECT tags.name FROM documents_tags
-                JOIN tags ON documents_tags.tid=tags.id AND
-                documents_tags.did=documents.id) AS tags,
-              ARRAY(SELECT pages.file FROM pages
-                WHERE pages.document=documents.id ORDER BY page_order) AS pages
-              FROM documents JOIN senders ON documents.sender=senders.id
-              WHERE ARRAY_LENGTH(ARRAY(SELECT tags.name FROM documents_tags
-                JOIN tags ON documents_tags.tid=tags.id AND
-                documents_tags.did=documents.id AND tags.name ILIKE ?), 1) > 0
-              OR senders.name ILIKE ?
-              OR TO_CHAR(received, 'YYYY-MM-DD') ILIKE ?
-             ORDER BY date DESC) x) y;";
+  $sql = sql_documents(
+    "ARRAY_LENGTH(ARRAY(SELECT tags.name FROM documents_tags
+       JOIN tags ON documents_tags.tid=tags.id AND
+       documents_tags.did=documents.id AND tags.name ILIKE ?), 1) > 0
+     OR senders.name ILIKE ? OR TO_CHAR(received, 'YYYY-MM-DD') ILIKE ?");
+  $sql = json_sql_multiple_documents($sql);
   $search_query = '%' . escape_like($search_query) . '%';
   $stmt = $db->prepare($sql);
   $stmt->execute([$search_query, $search_query, $search_query]);
@@ -205,64 +195,44 @@ $app->get('/search/:query', function($search_query) use ($db, $app) {
 });
 
 $app->get('/senders', function() use ($db, $app) {
-  $sql = "SELECT ROW_TO_JSON(x) AS json FROM (SELECT ARRAY_TO_JSON(ARRAY(
-            SELECT name FROM senders ORDER BY name)) AS senders) x;";
+  $sql = "SELECT name FROM senders ORDER BY name";
+  $sql = json_sql_multiple_array($sql, 'senders');
   $stmt = $db->query($sql);
   response_json_string($app, 200, $stmt->fetchColumn());
 });
 
 $app->get('/senders/:sender/documents', function($sender) use ($db, $app) {
-  $sql = "SELECT ROW_TO_JSON(y) AS json FROM
-            (SELECT ARRAY_TO_JSON(COALESCE(ARRAY_AGG(ROW_TO_JSON(x)), '{}'))
-            AS documents FROM
-              (SELECT documents.id, received AS date, senders.name AS sender,
-              ARRAY(SELECT tags.name FROM documents_tags
-                JOIN tags ON documents_tags.tid=tags.id AND
-                documents_tags.did=documents.id) AS tags,
-              ARRAY(SELECT pages.file FROM pages
-                WHERE pages.document=documents.id ORDER BY page_order) AS pages
-              FROM documents JOIN senders ON documents.sender=senders.id AND
-              senders.name=?
-              ORDER BY date DESC) x) y;";
+  $sql = sql_documents("senders.name=?");
+  $sql = json_sql_multiple_documents($sql);
   $stmt = $db->prepare($sql);
   $stmt->execute([$sender]);
   response_json_string($app, 200, $stmt->fetchColumn());
 });
 
 $app->get('/senders/:sender/relatedtags', function($sender) use ($db, $app) {
-  $sql = "SELECT ROW_TO_JSON(x) AS json FROM (SELECT ARRAY_TO_JSON(ARRAY(
-          SELECT name FROM tags WHERE id IN 
+  $sql = "SELECT name FROM tags WHERE id IN 
            (SELECT tid FROM documents_tags WHERE did IN
              (SELECT id FROM documents WHERE sender IN 
                (SELECT id FROM senders WHERE name=?))
-            GROUP BY tid))) AS related) x;";
+            GROUP BY tid)";
+  $sql = json_sql_multiple_array($sql, 'related');
   $stmt = $db->prepare($sql);
   $stmt->execute([$sender]);
   response_json_string($app, 200, $stmt->fetchColumn());
 });
 
 $app->get('/tags', function() use ($db, $app) {
-  $sql = "SELECT ROW_TO_JSON(x) AS json FROM (SELECT ARRAY_TO_JSON(ARRAY(
-            SELECT name FROM tags ORDER BY name)) AS tags) x;";
+  $sql = "SELECT name FROM tags ORDER BY name";
+  $sql = json_sql_multiple_array($sql, 'tags');
   $stmt = $db->query($sql);
   response_json_string($app, 200, $stmt->fetchColumn());
 });
 
 $app->get('/tags/:tag/documents', function($tag) use ($db, $app) {
-  $sql = "SELECT ROW_TO_JSON(y) AS json FROM
-            (SELECT ARRAY_TO_JSON(COALESCE(ARRAY_AGG(ROW_TO_JSON(x)), '{}'))
-            AS documents FROM
-              (SELECT documents.id, received AS date, senders.name AS sender,
-              ARRAY(SELECT tags.name FROM documents_tags
-                JOIN tags ON documents_tags.tid=tags.id AND
-                documents_tags.did=documents.id) AS tags,
-              ARRAY(SELECT pages.file FROM pages
-                WHERE pages.document=documents.id ORDER BY page_order) AS pages
-              FROM documents JOIN senders ON documents.sender=senders.id
-              WHERE ? IN (
-                SELECT tags.name FROM documents_tags JOIN tags ON
-                documents_tags.tid=tags.id AND documents_tags.did=documents.id)
-              ORDER BY date DESC) x) y;";
+  $sql = sql_documents("? IN (
+              SELECT tags.name FROM documents_tags JOIN tags ON
+              documents_tags.tid=tags.id AND documents_tags.did=documents.id)");
+  $sql = json_sql_multiple_documents($sql);
   $stmt = $db->prepare($sql);
   $stmt->execute([$tag]);
   response_json_string($app, 200, $stmt->fetchColumn());
