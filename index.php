@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="paperjam.css" />
+    <link rel="icon" href="images/favicon.png" />
     <title>Paperjam</title>
   </head>
 

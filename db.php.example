@@ -1,0 +1,11 @@
+<?php
+
+$dbstr  = "pgsql:host=127.0.0.1;dbname=paperjam";
+$dbuser = 'paperjam';
+$dbpass = 'notsogoodpwd';
+
+$db = new PDO($dbstr, $dbuser, $dbpass);
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+$PATH = '/srv/paperjam/files';
+?>

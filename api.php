@@ -5,9 +5,7 @@
  */
 
 require_once('db.php');
-
-require 'Slim/Slim.php';
-\Slim\Slim::registerAutoloader();
+require 'vendor/autoload.php';
 
 function response_created($app, $name, $idname, $id) {
   $created = [$idname => $id];
@@ -160,7 +158,7 @@ $app->get('/documents/:document_id', function($document_id) use ($db, $app) {
 });
 
 $app->get('/unorganised', function() use ($db, $app) {
-  $stmt = $db->query('SELECT * FROM unorganised_pages;');
+  $stmt = $db->query('SELECT * FROM unorganised_pages ORDER BY file;');
   response_json($app, 200, ['unorganised' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
 });
 

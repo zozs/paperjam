@@ -7,7 +7,7 @@
   the user chooses the appropriate pages and *staple* them together to form a
   document.
 - Every document has a *date*, a *sender*, and zero or more *tags*.
-- Watch for new mails on e.g. paperjam@apps.zozs.se, and add all attachments of
+- Watch for new mails on e.g. paperjam@apps.example.com, and add all attachments of
   .jpg or .pdf to the list of non-organised scanned pages. See e.g.
   http://unix.stackexchange.com/q/53047
 
