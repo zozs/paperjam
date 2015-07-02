@@ -11,8 +11,8 @@
     <title>Paperjam</title>
   </head>
 
-  <body>
-    <?php require('navbar.php'); ?>
+  <body ng-controller="CommonCtrl">
+    <div ng-include="'navbar.html'"></div>
 
     <!-- scripts and stuff -->
     <script src="bower_components/angular/angular.min.js"></script>

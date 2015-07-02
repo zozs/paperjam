@@ -1,15 +1,3 @@
-<?php
-if (!isset($_GET['id'])) {
-  echo "No id given!";
-  exit;
-}
-
-if (!preg_match('/^\d+$/', $_GET['id'])) {
-  echo "Invalid id!";
-  exit;
-}
-?>
-
 <!DOCTYPE html>
 
 <html ng-app="paperjamApp">
@@ -24,9 +12,9 @@ if (!preg_match('/^\d+$/', $_GET['id'])) {
   </head>
 
   <body ng-controller="CommonCtrl">
-    <?php $navbarCurrent = basename(__FILE__); require('navbar.php'); ?>
+    <div ng-include="'navbar.html'"></div>
     
-    <div class="container" ng-controller="ViewDocumentCtrl" ng-show="visible">
+    <div class="container" ng-controller="ViewDocumentCtrl" ng-show="document !== null">
       <div class="row">
         <div class="col-md-4">
           <label>Date</label>
@@ -87,9 +75,6 @@ if (!preg_match('/^\d+$/', $_GET['id'])) {
     <script src="bower_components/angular/angular.min.js"></script>
     <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
     <script src="paperjam.js"></script>
-    <script>
-      var db_id = <?= $_GET['id']; ?>;
-    </script>
     <script src="view.js"></script>
   </body>
 </html>

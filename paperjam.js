@@ -50,11 +50,18 @@ paperjamApp.controller('AlertCtrl', function ($scope, alerter) {
   };
 });
 
-paperjamApp.controller('UnorganisedCtrl', function($scope, $http, unorganised) {
+paperjamApp.controller('NavbarCtrl', function ($scope, $window) {
+  $scope.isCurrentPage = function (equalTo) {
+    var filename = $window.location.pathname.split('/').pop();
+    return filename === equalTo;
+  };
+});
+
+paperjamApp.controller('UnorganisedCtrl', function ($scope, $http, unorganised) {
   $scope.unorganisedData = unorganised.data;
 });
 
-paperjamApp.controller('CommonCtrl', function($scope) {
+paperjamApp.controller('CommonCtrl', function ($scope) {
   $scope.documentUrl = function (documentId) {
     return 'documents/' + documentId;
   };
@@ -68,6 +75,6 @@ paperjamApp.controller('CommonCtrl', function($scope) {
   };
 
   $scope.viewUrl = function (documentId) {
-    return 'view.php?id=' + documentId;
+    return 'view.html#/?id=' + documentId;
   };
 });

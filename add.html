@@ -13,8 +13,8 @@
     <script src="bower_components/jquery/dist/jquery.min.js"></script>
   </head>
 
-  <body>
-    <?php $navbarCurrent = basename(__FILE__); require('navbar.php'); ?>
+  <body ng-controller="CommonCtrl">
+    <div ng-include="'navbar.html'"></div>
     
     <div class="container" ng-controller="AddPageCtrl">
       <form enctype="multipart/form-data">

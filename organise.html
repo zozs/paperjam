@@ -16,7 +16,7 @@
   </head>
 
   <body ng-controller="CommonCtrl">
-    <?php $navbarCurrent = basename(__FILE__); require('navbar.php'); ?>
+    <div ng-include="'navbar.html'"></div>
 
     <div class="container">
       <div ng-controller="OrganiseCtrl">

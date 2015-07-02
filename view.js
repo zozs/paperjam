@@ -1,12 +1,25 @@
-paperjamApp.controller('ViewDocumentCtrl', function($scope, $http, $modal, alerter, unorganised) {
-  $http.get($scope.documentUrl(db_id)).success(function (data) {
-    $scope.document = data.document;
-  }).error(function () {
-    $scope.visible = false;
-    alerter.addAlert('warning', 'No such document exists');
-  });
+paperjamApp.controller('ViewDocumentCtrl', function($scope, $http, $modal, $location, alerter, unorganised) {
+  $scope.locationChangeSuccessHandler = function () {
+    $scope.dbId = null;
 
-  $scope.visible = true;
+    if ($location.search().hasOwnProperty('id')) {
+      $scope.dbId = $location.search().id;
+    }
+
+    $scope.document = null;
+
+    if ($scope.dbId !== null) {
+      $http.get($scope.documentUrl($scope.dbId)).success(function (data) {
+        $scope.document = data.document;
+      }).error(function () {
+        alerter.addAlert('warning', 'No such document exists');
+      });
+    } else {
+      alerter.addAlert('warning', 'You must provide a document id');
+    }
+  };
+
+  $scope.$on('$locationChangeSuccess', $scope.locationChangeSuccessHandler);
 
   $scope.deleteDocument = function () {
     var modalInstance = $modal.open({
@@ -17,7 +30,7 @@ paperjamApp.controller('ViewDocumentCtrl', function($scope, $http, $modal, alert
 
     modalInstance.result.then(function () {
       // OK! Delete everything.
-      $http.delete($scope.documentUrl(db_id))
+      $http.delete($scope.documentUrl($scope.dbId))
         .success(function () {
           alerter.addAlert('success', 'Document sucessfully removed');
           unorganised.loadData();
