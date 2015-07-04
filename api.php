@@ -126,6 +126,9 @@ function sql_documents($where_clause = NULL) {
             "ORDER BY date DESC";
 }
 
+/* Quite ugly, probably should indent the functions following. */
+$app->group('/api', function () use ($db, $app, $PATH) {
+
 /* URI Handlers */
 /* GET request handlers. */
 
@@ -424,6 +427,8 @@ $app->delete('/pages/:page_id', function($page_id) use ($db, $app, $PATH) {
   $db->commit();
   response_json($app, 204, []); /* Alles gut. */
 });
+
+}); /* end of $app->group('/api', ...); */
 
 $app->run();
 

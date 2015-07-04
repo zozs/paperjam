@@ -3,7 +3,32 @@
  * See the file LICENSE at https://github.com/zozs/paperjam
  */
 
-var paperjamApp = angular.module('paperjamApp', ['ui.bootstrap']);
+var paperjamApp = angular.module('paperjamApp', ['ngRoute', 'ui.bootstrap']);
+
+paperjamApp.config(function ($routeProvider, $locationProvider) {
+  $routeProvider
+    .when('/list', {
+      templateUrl: 'list.html',
+      controller: 'ListDocumentsCtrl'
+    })
+    .when('/find', {
+      templateUrl: 'find.html',
+      controller: 'FindDocumentsCtrl'
+    })
+    .when('/add', {
+      templateUrl: 'add.html',
+      controller: 'AddPageCtrl'
+    })
+    .when('/organise', {
+      templateUrl: 'organise.html',
+      controller: 'OrganiseCtrl'
+    })
+    .when('/view/:documentId', {
+      templateUrl: 'view.html',
+      controller: 'ViewDocumentCtrl'
+    });
+  $locationProvider.html5Mode(true);
+});
 
 paperjamApp.factory('unorganised', function ($http) {
   var unorganised = {};
@@ -12,7 +37,7 @@ paperjamApp.factory('unorganised', function ($http) {
   unorganised.data.unorganised = [];
 
   unorganised.loadData = function () {
-    $http.get('unorganised').success(function (data) {
+    $http.get('api/unorganised').success(function (data) {
       unorganised.data.unorganised = data.unorganised;
     });
   };
@@ -48,12 +73,16 @@ paperjamApp.controller('AlertCtrl', function ($scope, alerter) {
   $scope.closeAlert = function (index) {
     $scope.alerts.splice(index, 1);
   };
+  
+  $scope.$on('$routeChangeSuccess', function () {
+    // Clear all alerts when changing to a new page.
+    alerter.clearAlerts();
+  });
 });
 
-paperjamApp.controller('NavbarCtrl', function ($scope, $window) {
-  $scope.isCurrentPage = function (equalTo) {
-    var filename = $window.location.pathname.split('/').pop();
-    return filename === equalTo;
+paperjamApp.controller('NavbarCtrl', function ($scope, $location) {
+  $scope.isCurrentPage = function (viewLocation) { 
+    return $location.path().indexOf(viewLocation) == 0;
   };
 });
 
@@ -63,7 +92,7 @@ paperjamApp.controller('UnorganisedCtrl', function ($scope, $http, unorganised) 
 
 paperjamApp.controller('CommonCtrl', function ($scope) {
   $scope.documentUrl = function (documentId) {
-    return 'documents/' + documentId;
+    return 'api/documents/' + documentId;
   };
 
   $scope.fileUrl = function (filename) {
@@ -71,10 +100,10 @@ paperjamApp.controller('CommonCtrl', function ($scope) {
   };
 
   $scope.pageUrl = function (pageId) {
-    return 'pages/' + pageId;
+    return 'api/pages/' + pageId;
   };
 
   $scope.viewUrl = function (documentId) {
-    return 'view.html#/?id=' + documentId;
+    return 'view/' + documentId;
   };
 });

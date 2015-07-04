@@ -1,4 +1,9 @@
-paperjamApp.controller('AddPageCtrl', function($scope, $http, $modal, alerter, unorganised) {
+/*
+ * This file is distributed under the terms of the ISC License.
+ * See the file LICENSE at https://github.com/zozs/paperjam
+ */
+
+paperjamApp.controller('AddPageCtrl', function($scope, $modal, alerter, unorganised) {
   $scope.uploadActive = false;
   $scope.uploadState = null; /* or 'success' */
   $scope.totalSize = 100;
@@ -30,7 +35,7 @@ paperjamApp.controller('AddPageCtrl', function($scope, $http, $modal, alerter, u
        one AJAX request per file, let's do that sometime in the future. */
     $scope.uploadActive = true;
     $.ajax({
-      url: 'pages',
+      url: 'api/pages',
       type: 'POST',
       xhr: function() {
         var myXhr = $.ajaxSettings.xhr();

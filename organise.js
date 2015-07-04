@@ -1,12 +1,17 @@
+/*
+ * This file is distributed under the terms of the ISC License.
+ * See the file LICENSE at https://github.com/zozs/paperjam
+ */
+
 paperjamApp.controller('OrganiseCtrl', function ($scope, $http, $modal, $q, unorganised, alerter) {
   $scope.selectedPages = [];
   $scope.unorganisedData = unorganised.data;
 
-  $http.get('senders').success(function (data) {
+  $http.get('api/senders').success(function (data) {
     $scope.senders = data.senders;
   });
 
-  $http.get('tags').success(function (data) {
+  $http.get('api/tags').success(function (data) {
     $scope.tags = data.tags;
   });
 
@@ -59,7 +64,7 @@ paperjamApp.controller('OrganiseCtrl', function ($scope, $http, $modal, $q, unor
     }
 
     $scope.newEntryInfo.relatedTagsCanceler = $q.defer();
-    $http.get('senders/' + encoded_sender + '/relatedtags',
+    $http.get('api/senders/' + encoded_sender + '/relatedtags',
       {timeout: $scope.newEntryInfo.relatedTagsCanceler })
       .success(function (data) {
         $scope.newEntryInfo.relatedTagsCanceler = null;
@@ -105,7 +110,7 @@ paperjamApp.controller('OrganiseCtrl', function ($scope, $http, $modal, $q, unor
       return;
     }
 
-    $http.post('documents', {
+    $http.post('api/documents', {
       pages: pages,
       tags: $scope.newEntryInfo.tags,
       sender: $scope.newEntryInfo.sender,

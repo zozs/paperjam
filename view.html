@@ -1,33 +1,17 @@
-<!DOCTYPE html>
-
-<html ng-app="paperjamApp">
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="paperjam.css" />
-    <link rel="icon" href="images/favicon.png" />
-    <title>Paperjam - view document</title>
-  </head>
-
-  <body ng-controller="CommonCtrl">
-    <div ng-include="'navbar.html'"></div>
-    
-    <div class="container" ng-controller="ViewDocumentCtrl" ng-show="document !== null">
+    <div ng-show="data.document !== null">
       <div class="row">
         <div class="col-md-4">
           <label>Date</label>
-          <p ng-cloak>{{ document.date }}</p>
+          <p ng-cloak>{{ data.document.date }}</p>
         </div>
         <div class="col-md-4">
           <label>Sender</label>
-          <p ng-cloak>{{ document.sender }}</p>
+          <p ng-cloak>{{ data.document.sender }}</p>
         </div>
         <div class="col-md-4">
           <label>Tags</label>
           <p>
-            <span ng-repeat="tag in document.tags" ng-cloak>
+            <span ng-repeat="tag in data.document.tags" ng-cloak>
               <span class="label label-primary">{{ tag }}</span>
             </span>
           </p>
@@ -37,7 +21,7 @@
         <div class="col-md-12">
           <label>Pages</label>
           <div id="pages">
-            <div class="page" ng-repeat="page in document.pages">
+            <div class="page" ng-repeat="page in data.document.pages">
               <a href="{{ fileUrl(page) }}" target="_blank">
                 <img ng-src="{{ fileUrl(page) }}" alt="{{ page }}">
               </a>
@@ -70,11 +54,3 @@
         <button class="btn btn-primary" ng-click="cancel()">Cancel</button>
       </div>
     </script>    
-
-    <!-- scripts and stuff -->
-    <script src="bower_components/angular/angular.min.js"></script>
-    <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
-    <script src="paperjam.js"></script>
-    <script src="view.js"></script>
-  </body>
-</html>

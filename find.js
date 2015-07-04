@@ -3,10 +3,10 @@
  * See the file LICENSE at https://github.com/zozs/paperjam
  */
 
-paperjamApp.controller('FindDocumentsCtrl', function($scope, $http, $q, alerter) {
+paperjamApp.controller('FindDocumentsCtrl', function ($scope, $http, $q, alerter) {
   $scope.filterBy = function (val) {
     var eval = encodeURIComponent(val);
-    return $http.get('searchFor/' + eval).then(function (response) {
+    return $http.get('api/searchFor/' + eval).then(function (response) {
       /* Always allow the 'search' option. */
       response.data.matches.unshift({
         name: val,
@@ -36,10 +36,10 @@ paperjamApp.controller('FindDocumentsCtrl', function($scope, $http, $q, alerter)
       var encodedName = encodeURIComponent(value.name);
       var url = '';
       switch (value.type) {
-        case 'sender': url = 'senders/' + encodedName + '/documents'; break;
-        case 'tag': url = 'tags/' + encodedName + '/documents'; break;
-        case 'date': url = 'dates/' + encodedName + '/documents'; break;
-        case 'search': url = 'search/' + encodedName; break;
+        case 'sender': url = 'api/senders/' + encodedName + '/documents'; break;
+        case 'tag': url = 'api/tags/' + encodedName + '/documents'; break;
+        case 'date': url = 'api/dates/' + encodedName + '/documents'; break;
+        case 'search': url = 'api/search/' + encodedName; break;
       }
 
       $http.get(url, { timeout: $scope.filterByCanceler })
