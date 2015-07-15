@@ -13,7 +13,8 @@ paperjamApp.config(function ($routeProvider, $locationProvider) {
     })
     .when('/find', {
       templateUrl: 'find.html',
-      controller: 'FindDocumentsCtrl'
+      controller: 'FindDocumentsCtrl',
+      reloadOnSearch: false
     })
     .when('/add', {
       templateUrl: 'add.html',

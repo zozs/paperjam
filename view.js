@@ -40,6 +40,20 @@ paperjamApp.controller('ViewDocumentCtrl', function($scope, $http, $modal, $rout
       // Cancel.
     });
   };
+
+  $scope.viewPage = function (page) {
+    var modalInstance = $modal.open({
+      animation: false,
+      templateUrl: 'viewPage.html',
+      controller: 'ViewPageModalCtrl',
+      size: 'lg',
+      resolve: {
+        page: function () { return page; }
+      }
+    });
+
+    modalInstance.result.then(function () {}, function () {});
+  };
 });
 
 paperjamApp.controller('ConfirmDeleteDocumentCtrl', function ($scope, $modalInstance) {
@@ -48,6 +62,20 @@ paperjamApp.controller('ConfirmDeleteDocumentCtrl', function ($scope, $modalInst
   };
 
   $scope.cancel = function () {
+    $modalInstance.dismiss('cancel');
+  };
+});
+
+paperjamApp.controller('ViewPageModalCtrl', function ($scope, $modalInstance, $window, page) {
+  $scope.page = page;
+  console.log('got page:', page);
+
+  $scope.cancel = function () {
+    $modalInstance.dismiss('cancel');
+  };
+
+  $scope.openTab = function () {
+    $window.open(page, '_blank');
     $modalInstance.dismiss('cancel');
   };
 });

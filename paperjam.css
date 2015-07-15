@@ -71,3 +71,7 @@ img.image_picker_image {
   display: block;
   margin: 10px auto;
 }
+
+.page-viewer img {
+  width: 100%;
+}
