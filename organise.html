@@ -50,7 +50,7 @@
                      badge next to the tag? -->
                 <p>
                   <span ng-repeat="tag in newEntryInfo.relatedTags">
-                    <span class="label label-primary clickable-label" ng-click="addTag(tag)">{{ tag }}</span>
+                    <span class="label label-primary clickable-label" ng-click="addTag(tag.name)" tooltip="Times used: {{ tag.count }}" tooltip-popup-delay="500">{{ tag.name }}</span>
                   </span>
                 </p>
               </div>

@@ -211,12 +211,12 @@ $app->get('/senders/:sender/documents', function($sender) use ($db, $app) {
 });
 
 $app->get('/senders/:sender/relatedtags', function($sender) use ($db, $app) {
-  $sql = "SELECT name FROM tags WHERE id IN 
-           (SELECT tid FROM documents_tags WHERE did IN
-             (SELECT id FROM documents WHERE sender IN 
-               (SELECT id FROM senders WHERE name=?))
-            GROUP BY tid)";
-  $sql = json_sql_multiple_array($sql, 'related');
+  $sql = "SELECT tags.name, COUNT(tid) AS count FROM documents_tags
+          JOIN tags ON documents_tags.tid=tags.id
+          WHERE did IN (SELECT documents.id FROM documents JOIN senders ON
+          senders.name=? AND senders.id=documents.sender) GROUP BY tags.name
+          ORDER BY count DESC";
+  $sql = json_sql_multiple($sql, 'related');
   $stmt = $db->prepare($sql);
   $stmt->execute([$sender]);
   response_json_string($app, 200, $stmt->fetchColumn());
