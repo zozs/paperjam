@@ -304,6 +304,13 @@ $app->post('/documents', function() use ($db, $app) {
   }
 });
 
+function thumbnail_image($imagePath, $outputPath) {
+  $imagick = new \Imagick(realpath($imagePath));
+  $imagick->setbackgroundcolor('rgb(255, 255, 255)');
+  $imagick->thumbnailImage(142, 200, true);
+  $imagick->writeImage($outputPath);
+}
+
 $app->post('/pages', function() use ($db, $app, $PATH) {
   if (count($_FILES) == 0) {
     response_validation_error($app, 'No files given');
@@ -378,6 +385,10 @@ $app->post('/pages', function() use ($db, $app, $PATH) {
     }
     chmod($destination, 0644);
 
+    // Now generate a thumbnail image.
+    $destination_thumbnail = $PATH . '/thumbnails/' . $dest_filename;
+    thumbnail_image($destination, $destination_thumbnail);
+
     /* Add page to database. */
     $sql = 'INSERT INTO pages (file) VALUES (?);';
     $stmt = $db->prepare($sql);
@@ -419,6 +430,10 @@ $app->delete('/pages/:page_id', function($page_id) use ($db, $app, $PATH) {
   if ($filename === FALSE) {
     $db->rollBack(); /* no such database id */
     response_not_found($app);
+  }
+  if (!unlink($PATH . '/thumbnails/' . $filename)) {
+    $db->rollBack();
+    response_server_error($app, 'Failed to delete thumbnail from disk!');
   }
   if (!unlink($PATH . '/' . $filename)) {
     $db->rollBack();

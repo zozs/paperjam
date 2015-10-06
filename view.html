@@ -1,17 +1,17 @@
-    <div ng-show="data.document !== null">
+    <div ng-show="vm.data.document !== null">
       <div class="row">
         <div class="col-md-4">
           <label>Date</label>
-          <p ng-cloak>{{ data.document.date }}</p>
+          <p ng-cloak>{{ vm.data.document.date }}</p>
         </div>
         <div class="col-md-4">
           <label>Sender</label>
-          <p ng-cloak>{{ data.document.sender }}</p>
+          <p ng-cloak>{{ vm.data.document.sender }}</p>
         </div>
         <div class="col-md-4">
           <label>Tags</label>
           <p>
-            <span ng-repeat="tag in data.document.tags" ng-cloak>
+            <span ng-repeat="tag in vm.data.document.tags" ng-cloak>
               <span class="label label-primary">{{ tag }}</span>
             </span>
           </p>
@@ -21,10 +21,10 @@
         <div class="col-md-12">
           <label>Pages</label>
           <div id="pages">
-            <div class="page" ng-repeat="page in data.document.pages">
+            <div class="page" ng-repeat="page in vm.data.document.pages">
               <!--<a href="{{ fileUrl(page) }}" target="_blank">-->
-              <a href="#" ng-click="viewPage(fileUrl(page))">
-                <img ng-src="{{ fileUrl(page) }}" alt="{{ page }}">
+              <a href="#" ng-click="vm.viewPage(vm.urls.fileUrl(page))">
+                <img ng-src="{{ vm.urls.thumbnailUrl(page) }}" alt="{{ vm.page }}">
               </a>
             </div>
           </div>
@@ -34,7 +34,7 @@
         <div class="col-md-12">
           <label>Actions</label>
           <div>
-            <button type="button" class="btn btn-danger" ng-click="deleteDocument()">Delete document</button>
+            <button type="button" class="btn btn-danger" ng-click="vm.deleteDocument()">Delete document</button>
           </div>
         </div>
       </div>
@@ -51,17 +51,7 @@
         Are you sure?
       </div>
       <div class="modal-footer">
-        <button class="btn btn-danger" ng-click="ok()">Delete</button>
-        <button class="btn btn-primary" ng-click="cancel()">Cancel</button>
-      </div>
-    </script>
-
-    <script type="text/ng-template" id="viewPage.html">
-      <div class="modal-header">
-        <button class="btn btn-default" ng-click="openTab()">Open in new window</button>
-        <button class="btn btn-primary" ng-click="cancel()">Close</button>
-      </div>
-      <div class="modal-body page-viewer">
-        <img ng-src="{{ page }}" alt="{{ page }}">
+        <button class="btn btn-danger" ng-click="vm.ok()">Delete</button>
+        <button class="btn btn-primary" ng-click="vm.cancel()">Cancel</button>
       </div>
     </script>

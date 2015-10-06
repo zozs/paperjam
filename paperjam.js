@@ -22,11 +22,13 @@ paperjamApp.config(function ($routeProvider, $locationProvider) {
     })
     .when('/organise', {
       templateUrl: 'organise.html',
-      controller: 'OrganiseCtrl'
+      controller: 'OrganiseCtrl',
+      controllerAs: 'vm'
     })
     .when('/view/:documentId', {
       templateUrl: 'view.html',
-      controller: 'ViewDocumentCtrl'
+      controller: 'ViewDocumentCtrl',
+      controllerAs: 'vm'
     });
   $locationProvider.html5Mode(true);
 });
@@ -68,6 +70,53 @@ paperjamApp.factory('alerter', function () {
   return alerter;
 });
 
+paperjamApp.factory('urls', function () {
+  var urls = {};
+
+  urls.documentUrl = function (documentId) {
+    return 'api/documents/' + documentId;
+  };
+
+  urls.fileUrl = function (filename) {
+    return 'files/' + filename;
+  };
+
+  urls.pageUrl = function (pageId) {
+    return 'api/pages/' + pageId;
+  };
+
+  urls.thumbnailUrl = function (filename) {
+    return 'files/thumbnails/' + filename;
+  };
+
+  urls.viewUrl = function (documentId) {
+    return 'view/' + documentId;
+  };
+
+  return urls;
+});
+
+paperjamApp.factory('viewPage', function ($modal) {
+  var viewPage = {};
+
+  viewPage.viewPage = function (page) {
+    var modalInstance = $modal.open({
+      animation: false,
+      templateUrl: 'viewPage.html',
+      controller: 'ViewPageModalCtrl',
+      controllerAs: 'vm',
+      size: 'lg',
+      resolve: {
+        page: function () { return page; }
+      }
+    });
+
+    modalInstance.result.then(function () {}, function () {});
+  };
+
+  return viewPage;
+});
+
 paperjamApp.controller('AlertCtrl', function ($scope, alerter) {
   $scope.alerts = alerter.alerts;
 
@@ -91,6 +140,7 @@ paperjamApp.controller('UnorganisedCtrl', function ($scope, $http, unorganised) 
   $scope.unorganisedData = unorganised.data;
 });
 
+/* this should be deleted when every controller has been converted to controllerAs */
 paperjamApp.controller('CommonCtrl', function ($scope) {
   $scope.documentUrl = function (documentId) {
     return 'api/documents/' + documentId;
@@ -106,5 +156,18 @@ paperjamApp.controller('CommonCtrl', function ($scope) {
 
   $scope.viewUrl = function (documentId) {
     return 'view/' + documentId;
+  };
+});
+
+paperjamApp.controller('ViewPageModalCtrl', function ($modalInstance, $window, page) {
+  this.page = page;
+
+  this.cancel = function () {
+    $modalInstance.dismiss('cancel');
+  };
+
+  this.openTab = function () {
+    $window.open(page, '_blank');
+    $modalInstance.dismiss('cancel');
   };
 });

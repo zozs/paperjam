@@ -75,3 +75,18 @@ img.image_picker_image {
 .page-viewer img {
   width: 100%;
 }
+
+.page-picker-page {
+  border: 1px #ddd solid;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: #fff;
+}
+
+.page-picker-page-selected {
+  background-color: #337ab7;
+}
+
+.page-picker-page-selected .page-picker-text a {
+  color: white;
+}
