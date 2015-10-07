@@ -20,17 +20,18 @@
       <div class="row">
         <div class="col-md-12">
           <label>Pages</label>
-          <div id="pages">
-            <div class="page" ng-repeat="page in vm.data.document.pages">
-              <!--<a href="{{ fileUrl(page) }}" target="_blank">-->
-              <a href="#" ng-click="vm.viewPage(vm.urls.fileUrl(page))">
-                <img ng-src="{{ vm.urls.thumbnailUrl(page) }}" alt="{{ vm.page }}">
-              </a>
-            </div>
-          </div>
         </div>
       </div>
       <div class="row">
+        <div class="col-md-3" ng-repeat="page in vm.data.document.pages" ng-class="{clearfix: ($index % 4 == 0 && $index > 0)}">
+          <div class="view-page">
+            <a href="" ng-click="vm.viewPage(vm.urls.fileUrl(page))">
+              <img class="center-block" ng-src="{{ vm.urls.thumbnailUrl(page) }}" alt="{{ vm.page }}">
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="row top10">
         <div class="col-md-12">
           <label>Actions</label>
           <div>

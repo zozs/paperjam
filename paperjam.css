@@ -25,14 +25,6 @@ progress {
 	display: none;
 }
 
-img.image_picker_image {
-  height: 200px;
-}
-
-.thumbnail.selected a.image-picker-thumbnail-link {
-  color: white;
-}
-
 .clickable-label {
   cursor: pointer;
 }
@@ -48,32 +40,13 @@ img.image_picker_image {
 .top10 { margin-top: 10px; }
 .top30 { margin-top: 30px; }
 
-.page {
-  width: 220px;
-  float: left;
-  font-size: 0.8em;
-  border: 2px dashed white;
-  margin: 10px;
-}
-
-.page-selector {
-  display: none;
-}
-
-.page img {
-  width: 142px;
-  height: 200px;
-  margin: 0 auto;
-  display: block;
-}
-
-.page input {
-  display: block;
-  margin: 10px auto;
-}
-
 .page-viewer img {
   width: 100%;
+}
+
+.view-page {
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .page-picker-page {

@@ -122,7 +122,7 @@ paperjamApp.controller('OrganiseCtrl', function ($scope, $http, $modal, $q, unor
     }).success(function () {
       // We should probably reset everything here.
       organise.selectedPages.length = 0;
-      organise.selectedPagesIndices.length = 0;
+      organise.selectedPageIndices.length = 0;
       unorganised.loadData();
       organise.newEntryInfo.sender = '';
       organise.newEntryInfo.tags.length = 0;

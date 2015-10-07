@@ -2,10 +2,6 @@
         <tab heading="Select pages" active="vm.organiseTabs.select">
           <p>Select the pages you want to staple together to form a document.</p>
           <div class="row" ng-show="vm.unorganisedData.unorganised.length > 0">
-            <!--<select multiple="multiple" class="image-picker page-selector">
-              <option data-img-src="{{ vm.urls.thumbnailUrl(page.file) }}" value="{{ $index }}" ng-repeat="page in vm.unorganisedData.unorganised" data-img-label="<a class='image-picker-thumbnail-link' ng-click='vm.viewPage(vm.urls.fileUrl(page.file))'>{{ vm.urls.fileUrl(page.file) }}</a>" image-picker-repeat-done></option>
-            </select>
-            -->
             <div class="col-md-3" ng-repeat="page in vm.unorganisedData.unorganised" ng-click="vm.selectPage($index)" ng-class="{clearfix: ($index % 4 == 0 && $index > 0)}">
               <div class="page-picker-page" ng-class="{'page-picker-page-selected': (vm.selectedPageIndices.indexOf($index) != -1)}">
                 <img class="center-block img-thumbnail" ng-src="{{vm.urls.thumbnailUrl(page.file)}}">
