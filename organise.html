@@ -4,9 +4,10 @@
           <div class="row" ng-show="vm.unorganisedData.unorganised.length > 0">
             <div class="col-md-3" ng-repeat="page in vm.unorganisedData.unorganised" ng-click="vm.selectPage($index)" ng-class="{clearfix: ($index % 4 == 0 && $index > 0)}">
               <div class="page-picker-page" ng-class="{'page-picker-page-selected': (vm.selectedPageIndices.indexOf($index) != -1)}">
-                <img class="center-block img-thumbnail" ng-src="{{vm.urls.thumbnailUrl(page.file)}}">
+                <img class="center-block img-thumbnail" ng-src="{{vm.urls.thumbnailUrl(page.thumbnails[0])}}">
                 <div class="page-picker-text text-center">
-                  <a href="" ng-click="vm.viewPage(vm.urls.fileUrl(page.file)); $event.stopPropagation()">{{ page.file }}</a>
+                  <span ng-if="page.thumbnails.length > 1">{{ page.thumbnails.length }} pages</span><br>
+                  <a href="" ng-click="vm.viewPage(vm.urls.fileUrl(page.original)); $event.stopPropagation()">{{ page.original }}</a>
                 </div>
               </div>
             </div>
@@ -27,7 +28,7 @@
             <tbody>
               <tr ng-repeat="page in vm.selectedPages">
                 <td>{{ $index + 1 }}</td>
-                <td><a href="{{ vm.urls.fileUrl(page.file) }}" target="_blank">{{ page.file }}</a></td>
+                <td><a href="{{ vm.urls.fileUrl(page.original) }}" target="_blank">{{ page.original }}</a></td>
                 <td>
                   <div class="btn-group btn-group-xs" role="group">
                     <button type="button" class="btn btn-primary" ng-disabled="$first" ng-click="vm.moveUp($index)"><span class="glyphicon glyphicon-arrow-up"></span></button>

@@ -27,6 +27,7 @@ CREATE TABLE pages (
   file TEXT NOT NULL, -- only the filename, no path.
   document INTEGER NULL REFERENCES documents (id),
   page_order INTEGER NULL, -- 0-based page order in document.
+  page_count INTEGER NOT NULL DEFAULT 1,
   uploaded TIMESTAMP NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'), -- UTC time when file was uploaded.
   PRIMARY KEY(id)
 );

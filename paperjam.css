@@ -60,6 +60,7 @@ progress {
   background-color: #337ab7;
 }
 
+.page-picker-page-selected .page-picker-text,
 .page-picker-page-selected .page-picker-text a {
   color: white;
 }

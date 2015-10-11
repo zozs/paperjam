@@ -114,20 +114,55 @@ function json_sql_multiple_documents($sql) {
   return json_sql_multiple($sql, 'documents');
 }
 
+function sql_document() {
+  return "SELECT documents.id, received AS date, senders.name AS sender,
+            ARRAY(SELECT tags.name FROM documents_tags
+              JOIN tags ON documents_tags.tid=tags.id AND
+              documents_tags.did=documents.id) AS tags,
+            (SELECT ARRAY_AGG(p) FROM
+              (SELECT pages.file, pages.page_count FROM pages
+              WHERE pages.document=documents.id ORDER BY page_order) p) AS pages
+            FROM documents JOIN senders ON documents.sender=senders.id
+            WHERE documents.id=? ORDER BY date DESC";
+}
+
 function sql_documents($where_clause = NULL) {
   return "SELECT documents.id, received AS date, senders.name AS sender,
             ARRAY(SELECT tags.name FROM documents_tags
               JOIN tags ON documents_tags.tid=tags.id AND
               documents_tags.did=documents.id) AS tags,
-            ARRAY(SELECT pages.file FROM pages
-              WHERE pages.document=documents.id ORDER BY page_order) AS pages
+            (SELECT SUM(pt.page_count) FROM (SELECT page_count FROM pages
+              WHERE pages.document=documents.id) pt) AS pages
             FROM documents JOIN senders ON documents.sender=senders.id " .
             (is_null($where_clause) ? "" : " WHERE $where_clause ") .
             "ORDER BY date DESC";
 }
 
+/* Path functions */
+function original_path($filename) {
+  global $PATH;
+  return $PATH . "/" . $filename;
+}
+
+function thumbnail_filename_from_original($original, $page_count, $page_index) {
+  // will drop path information.
+  $info = pathinfo($original);
+  if ($page_count > 1) {
+    // multi-page, we must change e.g. file_2.pdf to file_2_index.png
+    return $info['filename'] . "_" . $page_index . ".png";
+  } else {
+    // just change file extension from .whatever to .png
+    return $info['filename'] . '.png';
+  }
+}
+
+function thumbnail_path($filename) {
+  global $PATH;
+  return $PATH . "/thumbnails/" . $filename;
+}
+
 /* Quite ugly, probably should indent the functions following. */
-$app->group('/api', function () use ($db, $app, $PATH) {
+$app->group('/api', function () use ($db, $app) {
 
 /* URI Handlers */
 /* GET request handlers. */
@@ -150,19 +185,42 @@ $app->get('/documents', function() use ($db, $app) {
 $app->get('/documents/:document_id', function($document_id) use ($db, $app) {
   $sql = "SELECT ROW_TO_JSON(y) AS json FROM
             (SELECT ROW_TO_JSON(x) AS document FROM
-              (" . sql_documents("documents.id=?") . ") x) y;";
+              (" . sql_document() . ") x) y;";
   $stmt = $db->prepare($sql);
   $stmt->execute([$document_id]);
   $document = $stmt->fetchColumn();
   if ($document == "") {
     response_not_found($app);
   }
-  response_json_string($app, 200, $document);
+  // Somewhat of an ugly hack, now parse the JSON here so we can add the
+  // thumbnail filenames as well.
+  $document_parsed = json_decode($document, true);
+  $pages = [];
+  foreach ($document_parsed['document']['pages'] as $page) {
+    $page_count = $page['page_count'];
+    for ($i = 0; $i < $page_count; $i++) {
+      $thumbnail =
+        thumbnail_filename_from_original($page['file'], $page_count, $i);
+      $pages[] = ["original" => $page['file'], "thumbnail" => $thumbnail];
+    }
+  }
+  $document_parsed['document']['pages'] = $pages;
+  response_json($app, 200, $document_parsed);
 });
 
 $app->get('/unorganised', function() use ($db, $app) {
-  $stmt = $db->query('SELECT * FROM unorganised_pages ORDER BY file;');
-  response_json($app, 200, ['unorganised' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+  $stmt = $db->query('SELECT id, file AS original, page_count FROM pages WHERE document IS NULL ORDER BY file;');
+  $unorganised = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  foreach ($unorganised as &$page) {
+    $page_count = $page['page_count'];
+    $page['thumbnails'] = [];
+    for ($i = 0; $i < $page_count; $i++) {
+      $thumbnail =
+        thumbnail_filename_from_original($page['original'], $page_count, $i);
+      $page['thumbnails'][] = $thumbnail;
+    }
+  }
+  response_json($app, 200, ['unorganised' => $unorganised]);
 });
 
 /* Global search which tries to find tags, dates, or senders matching the
@@ -304,14 +362,48 @@ $app->post('/documents', function() use ($db, $app) {
   }
 });
 
-function thumbnail_image($imagePath, $outputPath) {
-  $imagick = new \Imagick(realpath($imagePath));
-  $imagick->setbackgroundcolor('rgb(255, 255, 255)');
-  $imagick->thumbnailImage(142, 200, true);
-  $imagick->writeImage($outputPath);
+function check_file_type($app, $filePath) {
+  // Checks that we can handle the filetype, and return file extension to use.
+  $finfo = new finfo(FILEINFO_MIME_TYPE);
+  $mimeType = $finfo->file($filePath);
+  switch ($mimeType) {
+    case "image/jpeg": return "jpg";
+    case "image/png": return "png";
+    case "application/pdf": return "pdf";
+    default:
+      response_validation_error($app,
+        "Documents with MIME type $mimeType is not supported.");
+  }
 }
 
-$app->post('/pages', function() use ($db, $app, $PATH) {
+function thumbnail_image($imagePath) {
+  // Creates thumbnails for every page in $imagePath. Returns page count.
+  $imagick = new \Imagick(realpath($imagePath));
+  $page_count = $imagick->getNumberImages();
+  if ($page_count === 1) {
+    // Single page PDF or regular image. Dont append any suffix on thumbnail.
+    $imagick->setbackgroundcolor('rgb(255, 255, 255)');
+    $imagick->setImageFormat('png');
+    $imagick->thumbnailImage(142, 200, true);
+    $thumbnail = thumbnail_filename_from_original($imagePath, $page_count, 0);
+    $imagick->writeImage(thumbnail_path($thumbnail));
+    $imagick->clear();
+  } else {
+    // Probably a PDF. Iterate through all pages.
+    $imagick->clear();
+    for ($i = 0; $i < $page_count; $i++) {
+      $imagick = new \Imagick(realpath($imagePath) . "[" . $i . "]");
+      $imagick->setImageFormat('png');
+      $imagick->thumbnailImage(142, 200, true);
+      $thumbnail = thumbnail_filename_from_original($imagePath, $page_count, $i);
+      $imagick->writeImage(thumbnail_path($thumbnail));
+      $imagick->clear();
+    }
+  }
+  return $page_count;
+}
+
+$app->post('/pages', function() use ($db, $app) {
   if (count($_FILES) == 0) {
     response_validation_error($app, 'No files given');
   }
@@ -365,11 +457,8 @@ $app->post('/pages', function() use ($db, $app, $PATH) {
 
   $i = 0;
   foreach ($files as $file) {
-    /*
-     * Should probably validate the file extension and contents for security
-     * reasons. Let's assume the user is nice (yeah, right...)
-     */
-    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+    // Find file type, ensure that we can/want to handle it, return extension.
+    $extension = check_file_type($app, $file['tmp_name']);
 
     // Avoid getting a filename that is already used. Iterate until unique
     // filename is found.
@@ -377,7 +466,7 @@ $app->post('/pages', function() use ($db, $app, $PATH) {
       /* Move and rename file. */
       $seqno = sprintf('%03d', $i++);
       $dest_filename = $timestamp . '_' . $seqno . "." . strtolower($extension);
-      $destination = $PATH . '/' . $dest_filename;
+      $destination = original_path($dest_filename);
     } while (file_exists($destination));
     if (!move_uploaded_file($file['tmp_name'], $destination)) {
       // Attack or weird failure.
@@ -385,14 +474,13 @@ $app->post('/pages', function() use ($db, $app, $PATH) {
     }
     chmod($destination, 0644);
 
-    // Now generate a thumbnail image.
-    $destination_thumbnail = $PATH . '/thumbnails/' . $dest_filename;
-    thumbnail_image($destination, $destination_thumbnail);
+    // Now generate a thumbnail image/images.
+    $page_count = thumbnail_image($destination);
 
     /* Add page to database. */
-    $sql = 'INSERT INTO pages (file) VALUES (?);';
+    $sql = 'INSERT INTO pages (file, page_count) VALUES (?,?);';
     $stmt = $db->prepare($sql);
-    $stmt->execute([$dest_filename]);
+    $stmt->execute([$dest_filename, $page_count]);
   }
 
   /* Return data? */
@@ -422,20 +510,29 @@ $app->delete('/documents/:document_id', function($document_id) use ($db, $app) {
   response_json($app, 204, []); /* Done */
 });
 
-$app->delete('/pages/:page_id', function($page_id) use ($db, $app, $PATH) {
+$app->delete('/pages/:page_id', function($page_id) use ($db, $app) {
   $db->beginTransaction();
-  $stmt = $db->prepare("DELETE FROM pages WHERE id=? RETURNING file;");
+  $stmt = $db->prepare("DELETE FROM pages WHERE id=? RETURNING file, page_count;");
   $stmt->execute([$page_id]);
-  $filename = $stmt->fetchColumn();
-  if ($filename === FALSE) {
+  $deleted = $stmt->fetch(PDO::FETCH_ASSOC);
+  if ($deleted === FALSE) {
     $db->rollBack(); /* no such database id */
     response_not_found($app);
   }
-  if (!unlink($PATH . '/thumbnails/' . $filename)) {
-    $db->rollBack();
-    response_server_error($app, 'Failed to delete thumbnail from disk!');
+
+  $filename = $deleted['file'];
+  $page_count = $deleted['page_count'];
+
+  // Delete thumbnails from disk.
+  for ($i = 0; $i < $page_count; $i++) {
+    $thumbnail = thumbnail_filename_from_original($filename, $page_count, $i);
+    if (!unlink(thumbnail_path($thumbnail))) {
+      $db->rollBack();
+      response_server_error($app, 'Failed to delete thumbnail from disk!');
+    }
   }
-  if (!unlink($PATH . '/' . $filename)) {
+  // Delete original from disk.
+  if (!unlink(original_path($filename))) {
     $db->rollBack();
     response_server_error($app, 'Failed to delete file from disk!');
   }
