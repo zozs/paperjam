@@ -7,7 +7,7 @@
                 <img class="center-block img-thumbnail" ng-src="{{vm.urls.thumbnailUrl(page.thumbnails[0])}}">
                 <div class="page-picker-text text-center">
                   <span ng-if="page.thumbnails.length > 1">{{ page.thumbnails.length }} pages</span><br>
-                  <a href="" ng-click="vm.viewPage(vm.urls.fileUrl(page.original)); $event.stopPropagation()">{{ page.original }}</a>
+                  <a href="" ng-click="vm.viewPage(page.large[0], page.original); $event.stopPropagation()">{{ page.original }}</a>
                 </div>
               </div>
             </div>

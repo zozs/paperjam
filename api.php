@@ -144,21 +144,34 @@ function original_path($filename) {
   return $PATH . "/" . $filename;
 }
 
-function thumbnail_filename_from_original($original, $page_count, $page_index) {
-  // will drop path information.
-  $info = pathinfo($original);
-  if ($page_count > 1) {
-    // multi-page, we must change e.g. file_2.pdf to file_2_index.png
-    return $info['filename'] . "_" . $page_index . ".png";
-  } else {
-    // just change file extension from .whatever to .png
-    return $info['filename'] . '.png';
-  }
+function large_path($filename) {
+  global $PATH;
+  return $PATH . "/large/" . $filename;
 }
 
 function thumbnail_path($filename) {
   global $PATH;
   return $PATH . "/thumbnails/" . $filename;
+}
+
+function filename_from_original($original, $page_count, $page_index, $ext) {
+  // will drop path information.
+  $info = pathinfo($original);
+  if ($page_count > 1) {
+    // multi-page, we must change e.g. file_2.pdf to file_2_index.jpg
+    return $info['filename'] . "_" . $page_index . $ext;
+  } else {
+    // just change file extension from .whatever to .jpg
+    return $info['filename'] . $ext;
+  }
+}
+
+function large_filename_from_original($original, $page_count, $page_index) {
+  return filename_from_original($original, $page_count, $page_index, ".jpg");
+}
+
+function thumbnail_filename_from_original($original, $page_count, $page_index) {
+  return filename_from_original($original, $page_count, $page_index, ".png");
 }
 
 /* Quite ugly, probably should indent the functions following. */
@@ -201,7 +214,9 @@ $app->get('/documents/:document_id', function($document_id) use ($db, $app) {
     for ($i = 0; $i < $page_count; $i++) {
       $thumbnail =
         thumbnail_filename_from_original($page['file'], $page_count, $i);
-      $pages[] = ["original" => $page['file'], "thumbnail" => $thumbnail];
+      $large = large_filename_from_original($page['file'], $page_count, $i);
+      $pages[] = ["original" => $page['file'], "thumbnail" => $thumbnail,
+                  "large" => $large];
     }
   }
   $document_parsed['document']['pages'] = $pages;
@@ -209,14 +224,18 @@ $app->get('/documents/:document_id', function($document_id) use ($db, $app) {
 });
 
 $app->get('/unorganised', function() use ($db, $app) {
-  $stmt = $db->query('SELECT id, file AS original, page_count FROM pages WHERE document IS NULL ORDER BY file;');
+  $stmt = $db->query('SELECT id, file AS original, page_count FROM pages 
+                      WHERE document IS NULL ORDER BY file;');
   $unorganised = $stmt->fetchAll(PDO::FETCH_ASSOC);
   foreach ($unorganised as &$page) {
     $page_count = $page['page_count'];
+    $page['large'] = [];
     $page['thumbnails'] = [];
     for ($i = 0; $i < $page_count; $i++) {
       $thumbnail =
         thumbnail_filename_from_original($page['original'], $page_count, $i);
+      $large = large_filename_from_original($page['original'], $page_count, $i);
+      $page['large'][] = $large;
       $page['thumbnails'][] = $thumbnail;
     }
   }
@@ -376,31 +395,44 @@ function check_file_type($app, $filePath) {
   }
 }
 
-function thumbnail_image($imagePath) {
+function generate_image($imagePath, $width, $height, $bestFit, $image_format,
+                        $filename_func, $path_func) {
   // Creates thumbnails for every page in $imagePath. Returns page count.
   $imagick = new \Imagick(realpath($imagePath));
   $page_count = $imagick->getNumberImages();
   if ($page_count === 1) {
     // Single page PDF or regular image. Dont append any suffix on thumbnail.
     $imagick->setbackgroundcolor('rgb(255, 255, 255)');
-    $imagick->setImageFormat('png');
-    $imagick->thumbnailImage(142, 200, true);
-    $thumbnail = thumbnail_filename_from_original($imagePath, $page_count, 0);
-    $imagick->writeImage(thumbnail_path($thumbnail));
+    $imagick->setImageFormat($image_format);
+    $imagick->thumbnailImage($width, $height, $bestFit);
+    $thumbnail = $filename_func($imagePath, $page_count, 0);
+    $imagick->writeImage($path_func($thumbnail));
     $imagick->clear();
   } else {
     // Probably a PDF. Iterate through all pages.
     $imagick->clear();
     for ($i = 0; $i < $page_count; $i++) {
-      $imagick = new \Imagick(realpath($imagePath) . "[" . $i . "]");
-      $imagick->setImageFormat('png');
-      $imagick->thumbnailImage(142, 200, true);
-      $thumbnail = thumbnail_filename_from_original($imagePath, $page_count, $i);
-      $imagick->writeImage(thumbnail_path($thumbnail));
+      $imagick = new \Imagick();
+      $imagick->setResolution(300, 300);
+      $imagick->readImage(realpath($imagePath) . "[" . $i . "]");
+      $imagick->setImageFormat($image_format);
+      $imagick->thumbnailImage($width, $height, $bestFit);
+      $thumbnail = $filename_func($imagePath, $page_count, $i);
+      $imagick->writeImage($path_func($thumbnail));
       $imagick->clear();
     }
   }
   return $page_count;
+}
+
+function large_image($imagePath) {
+  return generate_image($imagePath, 868, 0, false, 'jpg',
+    'large_filename_from_original', 'large_path');
+}
+
+function thumbnail_image($imagePath) {
+  return generate_image($imagePath, 142, 200, true, 'png',
+    'thumbnail_filename_from_original', 'thumbnail_path');
 }
 
 $app->post('/pages', function() use ($db, $app) {
@@ -476,6 +508,7 @@ $app->post('/pages', function() use ($db, $app) {
 
     // Now generate a thumbnail image/images.
     $page_count = thumbnail_image($destination);
+    large_image($destination);
 
     /* Add page to database. */
     $sql = 'INSERT INTO pages (file, page_count) VALUES (?,?);';
@@ -531,11 +564,22 @@ $app->delete('/pages/:page_id', function($page_id) use ($db, $app) {
       response_server_error($app, 'Failed to delete thumbnail from disk!');
     }
   }
+
+  // Delete large thumbnails from disk.
+  for ($i = 0; $i < $page_count; $i++) {
+    $thumbnail = large_filename_from_original($filename, $page_count, $i);
+    if (!unlink(large_path($thumbnail))) {
+      $db->rollBack();
+      response_server_error($app, 'Failed to delete large thumbnail from disk!');
+    }
+  }
+
   // Delete original from disk.
   if (!unlink(original_path($filename))) {
     $db->rollBack();
     response_server_error($app, 'Failed to delete file from disk!');
   }
+
   $db->commit();
   response_json($app, 204, []); /* Alles gut. */
 });

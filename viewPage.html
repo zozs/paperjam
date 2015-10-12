@@ -3,5 +3,5 @@
         <button class="btn btn-primary" ng-click="vm.cancel()">Close</button>
       </div>
       <div class="modal-body page-viewer">
-        <img ng-src="{{ vm.page }}" alt="{{ vm.page }}">
+        <img ng-src="{{ vm.urls.largeUrl(vm.page.large) }}" alt="{{ vm.page.large }}">
       </div>

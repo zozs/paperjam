@@ -25,7 +25,7 @@
       <div class="row">
         <div class="col-md-3" ng-repeat="page in vm.data.document.pages" ng-class="{clearfix: ($index % 4 == 0 && $index > 0)}">
           <div class="view-page">
-            <a href="" ng-click="vm.viewPage(vm.urls.fileUrl(page.original))">
+            <a href="" ng-click="vm.viewPage(page.large, page.original)">
               <img class="center-block" ng-src="{{ vm.urls.thumbnailUrl(page.thumbnail) }}" alt="{{ vm.page.thumbnail }}">
             </a>
           </div>

@@ -5,7 +5,7 @@
 
 paperjamApp.controller('AddPageCtrl', function($scope, $modal, alerter, unorganised) {
   $scope.uploadActive = false;
-  $scope.uploadState = null; /* or 'success' */
+  $scope.uploadState = 'info'; /* or 'success' */
   $scope.totalSize = 100;
   $scope.currentUploaded = 0;
 

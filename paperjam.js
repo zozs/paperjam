@@ -81,6 +81,10 @@ paperjamApp.factory('urls', function () {
     return 'files/' + filename;
   };
 
+  urls.largeUrl = function (filename) {
+    return 'files/large/' + filename;
+  };
+
   urls.pageUrl = function (pageId) {
     return 'api/pages/' + pageId;
   };
@@ -99,7 +103,7 @@ paperjamApp.factory('urls', function () {
 paperjamApp.factory('viewPage', function ($modal) {
   var viewPage = {};
 
-  viewPage.viewPage = function (page) {
+  viewPage.viewPage = function (large, original) {
     var modalInstance = $modal.open({
       animation: false,
       templateUrl: 'viewPage.html',
@@ -107,7 +111,7 @@ paperjamApp.factory('viewPage', function ($modal) {
       controllerAs: 'vm',
       size: 'lg',
       resolve: {
-        page: function () { return page; }
+        page: function () { return {large: large, original: original}; }
       }
     });
 
@@ -142,32 +146,21 @@ paperjamApp.controller('UnorganisedCtrl', function ($scope, $http, unorganised) 
 
 /* this should be deleted when every controller has been converted to controllerAs */
 paperjamApp.controller('CommonCtrl', function ($scope) {
-  $scope.documentUrl = function (documentId) {
-    return 'api/documents/' + documentId;
-  };
-
-  $scope.fileUrl = function (filename) {
-    return 'files/' + filename;
-  };
-
-  $scope.pageUrl = function (pageId) {
-    return 'api/pages/' + pageId;
-  };
-
   $scope.viewUrl = function (documentId) {
     return 'view/' + documentId;
   };
 });
 
-paperjamApp.controller('ViewPageModalCtrl', function ($modalInstance, $window, page) {
+paperjamApp.controller('ViewPageModalCtrl', function ($modalInstance, $window, page, urls) {
   this.page = page;
+  this.urls = urls;
 
   this.cancel = function () {
     $modalInstance.dismiss('cancel');
   };
 
   this.openTab = function () {
-    $window.open(page, '_blank');
+    $window.open(urls.fileUrl(page.original), '_blank');
     $modalInstance.dismiss('cancel');
   };
 });
