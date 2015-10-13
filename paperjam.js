@@ -3,13 +3,14 @@
  * See the file LICENSE at https://github.com/zozs/paperjam
  */
 
-var paperjamApp = angular.module('paperjamApp', ['ngRoute', 'ui.bootstrap']);
+var paperjamApp = angular.module('paperjamApp', ['ngRoute', 'ngSanitize', 'ui.bootstrap']);
 
 paperjamApp.config(function ($routeProvider, $locationProvider) {
   $routeProvider
     .when('/list', {
       templateUrl: 'list.html',
-      controller: 'ListDocumentsCtrl'
+      controller: 'ListDocumentsCtrl',
+      controllerAs: 'vm'
     })
     .when('/find', {
       templateUrl: 'find.html',

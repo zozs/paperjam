@@ -10,7 +10,7 @@
                 <th>Tags</th>
             </thead>
             <tbody ng-cloak>
-              <tr ng-repeat="document in documents">
+              <tr ng-repeat="document in vm.documents">
                 <td>
                   <a href="{{ viewUrl(document.id) }}">
                     <span class="glyphicon glyphicon-file" aria-hidden="true"></span>

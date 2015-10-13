@@ -48,7 +48,7 @@
       <!-- templates -->
       <script type="text/ng-template" id="filterByTemplate.html">
         <a>
-          <span bind-html-unsafe="match.label | typeaheadHighlight:query"></span>
-          <small><em><span class="match-type pull-right">&nbsp;&nbsp;&nbsp;<span bind-html-unsafe="match.model.type"></span></span></em></small>
+          <span ng-bind-html="match.label | typeaheadHighlight:query"></span>
+          <small><em><span class="match-type pull-right">&nbsp;&nbsp;&nbsp;<span ng-bind-html="match.model.type"></span></span></em></small>
         </a>
       </script>

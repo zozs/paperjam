@@ -3,8 +3,10 @@
           <p>Select the pages you want to staple together to form a document.</p>
           <div class="row" ng-show="vm.unorganisedData.unorganised.length > 0">
             <div class="col-md-3" ng-repeat="page in vm.unorganisedData.unorganised" ng-click="vm.selectPage($index)" ng-class="{clearfix: ($index % 4 == 0 && $index > 0)}">
-              <div class="page-picker-page" ng-class="{'page-picker-page-selected': (vm.selectedPageIndices.indexOf($index) != -1)}">
-                <img class="center-block img-thumbnail" ng-src="{{vm.urls.thumbnailUrl(page.thumbnails[0])}}">
+              <div class="page-picker-page" ng-class="{'page-picker-page-selected': (vm.selectedPageIndices.indexOf($index) != -1)}" style="text-align: center;">
+                <div class="" style="display: inline-block;">
+                  <img class="img-thumbnail" ng-src="{{vm.urls.thumbnailUrl(page.thumbnails[0])}}">
+                </div>
                 <div class="page-picker-text text-center">
                   <span ng-if="page.thumbnails.length > 1">{{ page.thumbnails.length }} pages</span><br>
                   <a href="" ng-click="vm.viewPage(page.large[0], page.original); $event.stopPropagation()">{{ page.original }}</a>
