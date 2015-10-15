@@ -54,10 +54,43 @@ progress {
   border-radius: 4px;
   padding: 10px;
   background-color: #fff;
+  text-align: center;
 }
 
 .page-picker-page-selected {
   background-color: #337ab7;
+}
+
+.page-thumb-wrapper {
+  display: inline-block;
+  position: relative;
+}
+
+.page-thumb-placeholder {
+  position: relative;
+  width: 142px;
+  height: 200px;
+}
+
+.page-thumb {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: 0;
+}
+
+.page-thumb-overlay {
+  position: absolute;
+  top: 80px;
+  left: 40px;
+  z-index: 1;
+  font-size: 48px;
+  background-color: rgba(25, 25, 25, 0.7);
+  color: rgb(200, 200, 200);
+  font-weight: bold;
+  border-radius: 10px;
+  padding: 5px;
+  cursor: default;
 }
 
 .page-picker-page-selected .page-picker-text,

@@ -398,15 +398,19 @@ function check_file_type($app, $filePath) {
 function generate_image($imagePath, $width, $height, $bestFit, $image_format,
                         $filename_func, $path_func) {
   // Creates thumbnails for every page in $imagePath. Returns page count.
-  $imagick = new \Imagick(realpath($imagePath));
+  $imagick = new \Imagick();
+  $imagick->setResolution(300, 300);
+  $imagick->readImage(realpath($imagePath));
   $page_count = $imagick->getNumberImages();
   if ($page_count === 1) {
     // Single page PDF or regular image. Dont append any suffix on thumbnail.
-    $imagick->setbackgroundcolor('rgb(255, 255, 255)');
     $imagick->setImageFormat($image_format);
     $imagick->thumbnailImage($width, $height, $bestFit);
     $thumbnail = $filename_func($imagePath, $page_count, 0);
-    $imagick->writeImage($path_func($thumbnail));
+    // flatten image to remove transparency.
+    $im = $imagick->flattenImages();
+    $im->writeImage($path_func($thumbnail));
+    $im->clear();
     $imagick->clear();
   } else {
     // Probably a PDF. Iterate through all pages.
@@ -418,7 +422,9 @@ function generate_image($imagePath, $width, $height, $bestFit, $image_format,
       $imagick->setImageFormat($image_format);
       $imagick->thumbnailImage($width, $height, $bestFit);
       $thumbnail = $filename_func($imagePath, $page_count, $i);
-      $imagick->writeImage($path_func($thumbnail));
+      $im = $imagick->flattenImages();
+      $im->writeImage($path_func($thumbnail));
+      $im->clear();
       $imagick->clear();
     }
   }
