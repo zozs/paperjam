@@ -10,19 +10,19 @@
                 <th>Tags</th>
             </thead>
             <tbody ng-cloak>
-              <tr ng-repeat="document in vm.documents">
+              <tr ng-repeat="document in vm.documents | limitTo:vm.documentsPerPage:(vm.documentsCurrentPage-1)*vm.documentsPerPage">
                 <td>
-                  <a href="{{ viewUrl(document.id) }}">
+                  <a href="{{ vm.urls.viewUrl(document.id) }}">
                     <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
                   </a>
                 </td>
                 <td>
-                  <a href="{{ viewUrl(document.id) }}">
+                  <a href="{{ vm.urls.viewUrl(document.id) }}">
                     {{ document.date }}
                   </a>
                 </td>
                 <td>
-                  <a href="{{ viewUrl(document.id) }}">
+                  <a href="{{ vm.urls.viewUrl(document.id) }}">
                     {{ document.sender }}
                   </a>
                 </td>
@@ -35,5 +35,10 @@
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <pagination total-items="vm.documents.length" items-per-page="vm.documentsPerPage" ng-model="vm.documentsCurrentPage" class="pagination-sm" boundary-links="true" rotate="true"></pagination>
         </div>
       </div>
