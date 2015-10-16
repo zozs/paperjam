@@ -31,6 +31,11 @@
     
     <!-- ALERTS -->
     <div class="container" ng-controller="AlertCtrl">
-      <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)" ng-cloak>{{alert.msg}}</alert>
+      <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)" ng-cloak>
+        {{ alert.msg }}
+        <a ng-if="alert.link !== undefined" href="{{ alert.link }}" class="alert-link">
+          {{ alert.linkText }}
+        </a>
+      </alert>
     </div>
 

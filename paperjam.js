@@ -54,8 +54,9 @@ paperjamApp.factory('alerter', function () {
   var alerter = {};
 
   alerter.alerts = [];
-  alerter.addAlert = function (type, msg) {
-    alerter.alerts.push({ type: type, msg: msg });
+  alerter.addAlert = function (type, msg, link, linkText) {
+    alerter.alerts.push({ type: type, msg: msg, link: link,
+      linkText: linkText });
   };
 
   alerter.addApiErrors = function (errors) {

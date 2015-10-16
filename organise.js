@@ -119,7 +119,7 @@ paperjamApp.controller('OrganiseCtrl', function ($scope, $http, $modal, $q, unor
       tags: organise.newEntryInfo.tags,
       sender: organise.newEntryInfo.sender,
       date: organise.datePicker.dt.toISOString().slice(0, 10)
-    }).success(function () {
+    }).success(function (data) {
       // We should probably reset everything here.
       organise.selectedPages.length = 0;
       organise.selectedPageIndices.length = 0;
@@ -131,7 +131,9 @@ paperjamApp.controller('OrganiseCtrl', function ($scope, $http, $modal, $q, unor
       organise.organiseTabs.order= false; // activate start tab again.
       organise.organiseTabs.sender = false; // activate start tab again.
 
-      alerter.addAlert('success', 'Document was successfully created');
+      var new_url = organise.urls.viewUrl(data.id);
+      alerter.addAlert('success', 'Document was successfully created.', new_url,
+        'Click here to view.');
     }).error(function (err) {
       if (err.errors) {
         alerter.addApiErrors(err.errors);
