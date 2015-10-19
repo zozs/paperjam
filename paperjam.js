@@ -105,7 +105,7 @@ paperjamApp.factory('urls', function () {
 paperjamApp.factory('viewPage', function ($modal) {
   var viewPage = {};
 
-  viewPage.viewPage = function (large, original) {
+  viewPage.viewPage = function (pages, index) {
     var modalInstance = $modal.open({
       animation: false,
       templateUrl: 'viewPage.html',
@@ -113,7 +113,8 @@ paperjamApp.factory('viewPage', function ($modal) {
       controllerAs: 'vm',
       size: 'lg',
       resolve: {
-        page: function () { return {large: large, original: original}; }
+        pages: function () { return pages; },
+        index: function () { return index; }
       }
     });
 
@@ -153,8 +154,10 @@ paperjamApp.controller('CommonCtrl', function ($scope) {
   };
 });
 
-paperjamApp.controller('ViewPageModalCtrl', function ($modalInstance, $window, page, urls) {
-  this.page = page;
+paperjamApp.controller('ViewPageModalCtrl', function ($modalInstance, $window, pages, index, urls){
+  var self = this;
+  this.pages = pages;
+  this.currentPage = index + 1;
   this.urls = urls;
 
   this.cancel = function () {
@@ -162,7 +165,7 @@ paperjamApp.controller('ViewPageModalCtrl', function ($modalInstance, $window, p
   };
 
   this.openTab = function () {
-    $window.open(urls.fileUrl(page.original), '_blank');
+    $window.open(urls.fileUrl(self.pages[self.currentPage - 1].original), '_blank');
     $modalInstance.dismiss('cancel');
   };
 });

@@ -8,6 +8,7 @@ paperjamApp.controller('OrganiseCtrl', function ($scope, $http, $modal, $q, unor
   this.urls = urls;
   this.selectedPages = [];
   this.unorganisedData = unorganised.data;
+  this.viewPage = viewPage.viewPage;
 
   $http.get('api/senders').success(function (data) {
     organise.senders = data.senders;
@@ -198,7 +199,13 @@ paperjamApp.controller('OrganiseCtrl', function ($scope, $http, $modal, $q, unor
     organise.selectedPagesChanged(null, organise.selectedPageIndices);
   };
 
-  this.viewPage = viewPage.viewPage;
+  this.viewOrganisePage = function (page) {
+    // wrapper for the viewPage function.
+    var pages = page.large.map(function (e) {
+      return { large: e, original: page.original };
+    });
+    organise.viewPage(pages, 0); // index always 0
+  };
 });
 
 paperjamApp.controller('ConfirmDeleteInstanceCtrl', function ($modalInstance) {

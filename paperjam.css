@@ -97,3 +97,8 @@ progress {
 .page-picker-page-selected .page-picker-text a {
   color: white;
 }
+
+.modal-header .pagination {
+  margin: 0;
+  vertical-align: middle;
+}

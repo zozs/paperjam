@@ -1,7 +1,14 @@
       <div class="modal-header">
-        <button class="btn btn-default" ng-click="vm.openTab()">Open in new window</button>
-        <button class="btn btn-primary" ng-click="vm.cancel()">Close</button>
+        <span class="pull-left" style="width: 15%">
+          <button class="btn btn-primary pull-left" ng-click="vm.cancel()">Close</button>
+        </span>
+        <span class="text-center" style="width: 65%; display: inline-block;">
+          <pagination total-items="vm.pages.length" items-per-page="1" ng-model="vm.currentPage" boundary-links="false" rotate="true"></pagination>
+        </span>
+        <span class="pull-right" style="width: 20%">
+          <button class="btn btn-default pull-right" ng-click="vm.openTab()">Open original</button>
+        </span>
       </div>
       <div class="modal-body page-viewer">
-        <img ng-src="{{ vm.urls.largeUrl(vm.page.large) }}" alt="{{ vm.page.large }}">
+        <img ng-src="{{ vm.urls.largeUrl(vm.pages[vm.currentPage - 1].large) }}" alt="{{ vm.pages[vm.currentPage - 1].large }}">
       </div>
