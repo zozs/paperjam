@@ -25,7 +25,7 @@ def load_settings(filename):
         return config
 
 
-def save_settings(conficg, filename):
+def save_settings(config, filename):
     """Save settings to JSON."""
     with open(filename, 'w') as f:
         json.dump(config, f, indent=2)
