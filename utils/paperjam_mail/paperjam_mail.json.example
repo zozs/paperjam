@@ -1,0 +1,12 @@
+{
+  "pop": {
+    "user": "recent:paperjam@gmail.example.com", 
+    "host": "pop.gmail.com", 
+    "port": 995, 
+    "pass": "secret"
+  }, 
+  "hashes": [], 
+  "paperjam": "https://example.com/paperjam", 
+  "paperjam_ca": "/etc/ca-certificates/trust-source/anchors/cacertforpaperjam.crt",
+  "sender_whitelist": ["valid@example.com"]
+}
