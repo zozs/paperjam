@@ -91,6 +91,10 @@ paperjamApp.factory('urls', function () {
     return 'api/pages/' + pageId;
   };
 
+  urls.rotateUrl = function (pageId, pageCountId) {
+    return urls.pageUrl(pageId) + '/' + pageCountId + '/rotation';
+  };
+
   urls.thumbnailUrl = function (filename) {
     return 'files/thumbnails/' + filename;
   };
@@ -143,7 +147,7 @@ paperjamApp.controller('NavbarCtrl', function ($scope, $location) {
   };
 });
 
-paperjamApp.controller('UnorganisedCtrl', function ($scope, $http, unorganised) {
+paperjamApp.controller('UnorganisedCtrl', function ($scope, unorganised) {
   $scope.unorganisedData = unorganised.data;
 });
 
@@ -154,7 +158,22 @@ paperjamApp.controller('CommonCtrl', function ($scope) {
   };
 });
 
-paperjamApp.controller('ViewPageModalCtrl', function ($modalInstance, $window, pages, index, urls){
+paperjamApp.filter('degreeRotate', function() {
+  return function (input) {
+    if (input === undefined) {
+      input = 0;
+    }
+    switch (input) {
+      case 0:   return "No rotation";
+      case 180: return "180°";
+      case 270: return "90° counter-clockwise";
+      case 90:  return "90° clockwise";
+      default:  return input + "°";
+    }
+  };
+})
+
+paperjamApp.controller('ViewPageModalCtrl', function ($modalInstance, $window, $http, pages, index, urls){
   var self = this;
   this.pages = pages;
   this.currentPage = index + 1;
@@ -167,5 +186,31 @@ paperjamApp.controller('ViewPageModalCtrl', function ($modalInstance, $window, p
   this.openTab = function () {
     $window.open(urls.fileUrl(self.pages[self.currentPage - 1].original), '_blank');
     $modalInstance.dismiss('cancel');
+  };
+
+  this.rotate = function (degrees) {
+    self.pages[self.currentPage - 1].rotateLoading = true;
+    $http.put(self.pages[self.currentPage - 1].rotateUrl, {'rotation': degrees})
+      .then(function () {
+        // We must also force a reload of the image. Do this by appending a
+        // random query string at the end of the image paths.
+        var addDecacheFunc = function (current) {
+          if (current === undefined) return undefined;
+          if (current.indexOf('?') !== -1) {
+            current = current.substring(0, current.indexOf('?'));
+          }
+          current = current + '?decache=' + new Date().getTime();
+          return current;
+        };
+        self.pages[self.currentPage - 1].large =
+          addDecacheFunc(self.pages[self.currentPage - 1].large);
+        self.pages[self.currentPage - 1].thumbnail =
+          addDecacheFunc(self.pages[self.currentPage - 1].thumbnail);
+
+        self.pages[self.currentPage - 1].rotateLoading = false;
+      }, function () {
+        self.pages[self.currentPage - 1].rotateLoading = false;
+        console.log('Failed to rotate image!');
+      });
   };
 });

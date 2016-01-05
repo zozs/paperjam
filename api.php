@@ -61,6 +61,7 @@ class Validators {
     public static $DATE =
       ['date', 'valid_date', 'Invalid date! Use YYYY-MM-DD.'];
     public static $PAGES = ['pages', 'valid_pages', 'Invalid pages!'];
+    public static $ROTATION = ['rotation', 'valid_rotation', 'Invalid rotation.'];
     public static $SENDER = ['sender', 'valid_non_null', 'Invalid sender.'];
     public static $TAGS = ['tags', 'valid_tags', 'Invalid tags.'];
 }
@@ -84,6 +85,10 @@ function valid_non_null($x) {
 
 function valid_pages($pages) {
   return is_array($pages) && count($pages) > 0;
+}
+
+function valid_rotation($rotation) {
+  return is_int($rotation) && $rotation >= 0 && $rotation < 360;
 }
 
 function valid_tags($tags) {
@@ -120,7 +125,7 @@ function sql_document() {
               JOIN tags ON documents_tags.tid=tags.id AND
               documents_tags.did=documents.id) AS tags,
             (SELECT ARRAY_AGG(p) FROM
-              (SELECT pages.file, pages.page_count FROM pages
+              (SELECT pages.id, pages.file, pages.page_count FROM pages
               WHERE pages.document=documents.id ORDER BY page_order) p) AS pages
             FROM documents JOIN senders ON documents.sender=senders.id
             WHERE documents.id=? ORDER BY date DESC";
@@ -206,7 +211,7 @@ $app->get('/documents/:document_id', function($document_id) use ($db, $app) {
     response_not_found($app);
   }
   // Somewhat of an ugly hack, now parse the JSON here so we can add the
-  // thumbnail filenames as well.
+  // thumbnail filenames and urls, as well.
   $document_parsed = json_decode($document, true);
   $pages = [];
   foreach ($document_parsed['document']['pages'] as $page) {
@@ -215,8 +220,10 @@ $app->get('/documents/:document_id', function($document_id) use ($db, $app) {
       $thumbnail =
         thumbnail_filename_from_original($page['file'], $page_count, $i);
       $large = large_filename_from_original($page['file'], $page_count, $i);
+      $url = $app->urlFor('rotate',
+        ['page_id' => $page['id'], 'page_count_id' => $i]);
       $pages[] = ["original" => $page['file'], "thumbnail" => $thumbnail,
-                  "large" => $large];
+                  "large" => $large, "rotateUrl" => $url];
     }
   }
   $document_parsed['document']['pages'] = $pages;
@@ -396,14 +403,21 @@ function check_file_type($app, $filePath) {
 }
 
 function generate_image($imagePath, $width, $height, $bestFit, $image_format,
-                        $filename_func, $path_func) {
+                        callable $filename_func, callable $path_func,
+                        $rotate, $page_count_id) {
   // Creates thumbnails for every page in $imagePath. Returns page count.
+  // Returns FALSE if $page_count_id is larger than the page_count of the image.
   $imagick = new \Imagick();
   $imagick->setResolution(300, 300);
   $imagick->readImage(realpath($imagePath));
   $page_count = $imagick->getNumberImages();
+  if ($page_count_id !== NULL && $page_count_id >= $page_count) {
+    return FALSE;
+  }
+
   if ($page_count === 1) {
     // Single page PDF or regular image. Dont append any suffix on thumbnail.
+    $imagick->rotateImage(new \ImagickPixel(), $rotate);
     $imagick->setImageFormat($image_format);
     $imagick->thumbnailImage($width, $height, $bestFit);
     $thumbnail = $filename_func($imagePath, $page_count, 0);
@@ -413,15 +427,30 @@ function generate_image($imagePath, $width, $height, $bestFit, $image_format,
     $im->clear();
     $imagick->clear();
   } else {
-    // Probably a PDF. Iterate through all pages.
+    // Probably a PDF. Iterate through all pages, unless $page_count_id is set.
     $imagick->clear();
-    for ($i = 0; $i < $page_count; $i++) {
+    if ($page_count_id === NULL) {
+      for ($i = 0; $i < $page_count; $i++) {
+        $imagick = new \Imagick();
+        $imagick->setResolution(300, 300);
+        $imagick->readImage(realpath($imagePath) . "[" . $i . "]");
+        $imagick->rotateImage(new \ImagickPixel(), $rotate);
+        $imagick->setImageFormat($image_format);
+        $imagick->thumbnailImage($width, $height, $bestFit);
+        $thumbnail = $filename_func($imagePath, $page_count, $i);
+        $im = $imagick->flattenImages();
+        $im->writeImage($path_func($thumbnail));
+        $im->clear();
+        $imagick->clear();
+      }
+    } else {
       $imagick = new \Imagick();
       $imagick->setResolution(300, 300);
-      $imagick->readImage(realpath($imagePath) . "[" . $i . "]");
+      $imagick->readImage(realpath($imagePath) . "[" . $page_count_id . "]");
+      $imagick->rotateImage(new \ImagickPixel(), $rotate);
       $imagick->setImageFormat($image_format);
       $imagick->thumbnailImage($width, $height, $bestFit);
-      $thumbnail = $filename_func($imagePath, $page_count, $i);
+      $thumbnail = $filename_func($imagePath, $page_count, $page_count_id);
       $im = $imagick->flattenImages();
       $im->writeImage($path_func($thumbnail));
       $im->clear();
@@ -431,14 +460,15 @@ function generate_image($imagePath, $width, $height, $bestFit, $image_format,
   return $page_count;
 }
 
-function large_image($imagePath) {
+function large_image($imagePath, $rotate = 0, $page_count_id = NULL) {
   return generate_image($imagePath, 868, 0, false, 'jpg',
-    'large_filename_from_original', 'large_path');
+    'large_filename_from_original', 'large_path', $rotate, $page_count_id);
 }
 
-function thumbnail_image($imagePath) {
+function thumbnail_image($imagePath, $rotate = 0, $page_count_id = NULL) {
   return generate_image($imagePath, 142, 200, true, 'png',
-    'thumbnail_filename_from_original', 'thumbnail_path');
+    'thumbnail_filename_from_original', 'thumbnail_path',
+    $rotate, $page_count_id);
 }
 
 $app->post('/pages', function() use ($db, $app) {
@@ -525,6 +555,36 @@ $app->post('/pages', function() use ($db, $app) {
   /* Return data? */
   response_json($app, 200, []);
 });
+
+
+/* PUT handlers */
+
+$app->put('/pages/:page_id/:page_count_id/rotation',
+           function ($page_id, $page_count_id) use ($db, $app) {
+  /*
+   * Perform a rotation of the large and thumbnail images, but do not
+   * alter the original file. Instead, to prevent loss of image quality,
+   * create the (rotated) thumbnail/large image from the original file.
+   */
+  $data = json_decode($app->request->getBody(), TRUE);
+  validate_params($app, $data, [Validators::$ROTATION]);
+
+  $stmt = $db->prepare('SELECT id, file AS original FROM pages WHERE id=? AND 
+                        ?<page_count;');
+  $stmt->execute([$page_id, $page_count_id]);
+  $page = $stmt->fetch(PDO::FETCH_ASSOC);
+  if ($page === FALSE) {
+    response_not_found($app);
+  }
+
+  // Recreate the large/thumbnail images, but with correct rotation.
+  $original_filename = $page['original'];
+  $original_path = original_path($original_filename);
+  thumbnail_image($original_path, $data['rotation'], $page_count_id);
+  large_image($original_path, $data['rotation'], $page_count_id);
+  response_json($app, 204, []);
+})->name('rotate');
+
 
 /* DELETE handlers */
 

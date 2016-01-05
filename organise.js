@@ -201,8 +201,8 @@ paperjamApp.controller('OrganiseCtrl', function ($scope, $http, $modal, $q, unor
 
   this.viewOrganisePage = function (page) {
     // wrapper for the viewPage function.
-    var pages = page.large.map(function (e) {
-      return { large: e, original: page.original };
+    var pages = page.large.map(function (e, i) {
+      return { large: e, original: page.original, rotateUrl: urls.rotateUrl(page.id, i) };
     });
     organise.viewPage(pages, 0); // index always 0
   };

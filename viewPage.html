@@ -1,8 +1,19 @@
       <div class="modal-header">
-        <span class="pull-left" style="width: 15%">
-          <button class="btn btn-primary pull-left" ng-click="vm.cancel()">Close</button>
+        <span class="pull-left" style="width: 20%">
+          <button class="btn btn-primary" ng-click="vm.cancel()">Close</button>
+          <div class="btn-group" dropdown is-open="vm.rotateStatus.isopen">
+            <button type="button" class="btn btn-default" dropdown-toggle>
+              Rotate <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu">
+              <li role="menuitem"><a href="#" ng-click="vm.rotate(0)">{{ 0 | degreeRotate }}</a></li>
+              <li role="menuitem"><a href="#" ng-click="vm.rotate(270)">{{ 270 | degreeRotate }}</a></li>
+              <li role="menuitem"><a href="#" ng-click="vm.rotate(90)">{{ 90 | degreeRotate }}</a></li>
+              <li role="menuitem"><a href="#" ng-click="vm.rotate(180)">{{ 180 | degreeRotate }}</a></li>
+            </ul>
+          </div>
         </span>
-        <span class="text-center" style="width: 65%; display: inline-block;">
+        <span class="text-center" style="width: 60%; display: inline-block;">
           <pagination total-items="vm.pages.length" items-per-page="1" ng-model="vm.currentPage" boundary-links="false" rotate="true"></pagination>
         </span>
         <span class="pull-right" style="width: 20%">
@@ -10,5 +21,6 @@
         </span>
       </div>
       <div class="modal-body page-viewer">
-        <img ng-src="{{ vm.urls.largeUrl(vm.pages[vm.currentPage - 1].large) }}" alt="{{ vm.pages[vm.currentPage - 1].large }}">
+        <img ng-src="{{ vm.urls.largeUrl(vm.pages[vm.currentPage - 1].large) }}" alt="{{ vm.pages[vm.currentPage - 1].large }}" ng-hide="vm.pages[vm.currentPage - 1].rotateLoading">
+        <span class="glyphicon glyphicon-refresh spinning" ng-show="vm.pages[vm.currentPage - 1].rotateLoading"></span>
       </div>
