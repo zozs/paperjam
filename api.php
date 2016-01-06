@@ -123,7 +123,7 @@ function sql_document() {
   return "SELECT documents.id, received AS date, senders.name AS sender,
             ARRAY(SELECT tags.name FROM documents_tags
               JOIN tags ON documents_tags.tid=tags.id AND
-              documents_tags.did=documents.id) AS tags,
+              documents_tags.did=documents.id ORDER BY tags.name) AS tags,
             (SELECT ARRAY_AGG(p) FROM
               (SELECT pages.id, pages.file, pages.page_count FROM pages
               WHERE pages.document=documents.id ORDER BY page_order) p) AS pages
@@ -135,7 +135,7 @@ function sql_documents($where_clause = NULL) {
   return "SELECT documents.id, received AS date, senders.name AS sender,
             ARRAY(SELECT tags.name FROM documents_tags
               JOIN tags ON documents_tags.tid=tags.id AND
-              documents_tags.did=documents.id) AS tags,
+              documents_tags.did=documents.id ORDER BY tags.name) AS tags,
             (SELECT SUM(pt.page_count) FROM (SELECT page_count FROM pages
               WHERE pages.document=documents.id) pt) AS pages
             FROM documents JOIN senders ON documents.sender=senders.id " .
