@@ -1,8 +1,10 @@
 FROM php:7.3-apache
 
-RUN apt-get update && apt-get install -y git unzip zip libpq-dev
+RUN apt-get update && apt-get install -y git unzip zip libpq-dev ghostscript
+RUN apt-get install -y libmagickwand-dev --no-install-recommends
 RUN docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
     && docker-php-ext-install pdo pdo_pgsql pgsql
+RUN yes '' | pecl install imagick && docker-php-ext-enable imagick
 
 RUN curl -SL https://getcomposer.org/installer | php -- --install-dir=/usr/bin/ --filename=composer \
 	&& chmod +x /usr/bin/composer
