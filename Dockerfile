@@ -11,6 +11,8 @@ RUN curl -SL https://getcomposer.org/installer | php -- --install-dir=/usr/bin/ 
 
 COPY 000-default.conf /etc/apache2/sites-available/
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+RUN sed -ri -e 's/^upload_max_filesize.*/upload_max_filesize = 16M/g' "$PHP_INI_DIR/php.ini"
+RUN sed -ri -e 's/^post_max_size.*/post_max_size = 16M/g' "$PHP_INI_DIR/php.ini"
 RUN a2enmod rewrite
 
 ENV APACHE_DOCUMENT_ROOT /srv/http
